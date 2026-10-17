@@ -1,5 +1,6 @@
 #include "render.h"
 #include "config.h"
+#include "i18n.h"
 #include "blur.h"
 #include "esp.h"
 #include "game.h"
@@ -124,7 +125,7 @@ void HandleHotkeys() {
         if (!toggled[i]) continue;
         const ToggleDef& t = Toggles()[i];
         *t.value = !*t.value;
-        state::Notify(std::string(t.label) + (*t.value ? u8": вкл" : u8": выкл"));
+        state::Notify(std::string(L(t.label)) + (*t.value ? L(u8": вкл") : L(u8": выкл")));
     }
 }
 

@@ -1,5 +1,6 @@
 #include "config.h"
 #include "game.h"
+#include "i18n.h"
 #include "il2cpp.h"
 #include "log.h"
 #include "render.h"
@@ -81,6 +82,7 @@ DWORD WINAPI MainThread(LPVOID) {
     g_configPath = dir + L"granny_menu.ini";
     LOG("Granny Legacy Menu starting");
     if (LoadConfig(g_configPath)) LOG("config loaded");
+    if (g_cfg.language < 0) g_cfg.language = DefaultLanguage();
 
     if (!WaitFor([] { return GetModuleHandleW(L"GameAssembly.dll") && GetModuleHandleW(L"UnityPlayer.dll"); }, 60000) ||
         !il2cpp::Init()) {

@@ -7,6 +7,8 @@
 ![Graphics](https://img.shields.io/badge/D3D11-ImGui-6f42c1)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+**English:** an in-game trainer for Granny Legacy with a Material 3 Expressive UI — ESP, chams, radar, aimbot / silent aim, godmode, invisibility, noclip, item and weapon spawning, auto-use of keys, enemy AI control and GPU-blurred glass surfaces. The interface is available in **English and Russian** (Settings → Language). Build with `build.bat`, run `inject.bat`, press **Insert** in game.
+
 > **Только для одиночной игры.** Проект не связан с DVloper и издателями игры. В репозитории нет файлов игры, ассетов, дампов или декомпилированного кода — только собственный код мода, который во время работы находит нужные классы игры по их именам. Используйте на свой риск.
 
 ---
@@ -46,6 +48,7 @@
 - **Material 3 Expressive motion**: пружины с перелётом, перетекающий индикатор навигации, ripple, «сжатие» кнопок при нажатии, squash & stretch переключателей, поочерёдный въезд карточек, морфинг-индикатор загрузки, волнистый прогресс в уведомлениях.
 - **Материал окна**: нет / стекло / матовое / акрил — размытие фона считается на GPU, настраиваются прозрачность и сила размытия.
 - **Быстрый доступ (FAB)** — кнопка с выбранными функциями, **горячие клавиши для любой функции**.
+- **Русский и английский язык** интерфейса (при первом запуске выбирается по языку Windows, меняется в «Настройки → Язык»).
 - Сохранение и загрузка конфига (`granny_menu.ini`).
 
 ---

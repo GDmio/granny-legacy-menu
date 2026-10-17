@@ -1,4 +1,5 @@
 #include "widgets.h"
+#include "i18n.h"
 #include "motion.h"
 #include "theme.h"
 #include <Windows.h>
@@ -461,7 +462,7 @@ bool KeyBind(const char* label, int* vk, float pillWidth) {
     const float layer = StateLayer(id, hov, held);
     if (layer > 0.003f) dl->AddRectFilled(pill.Min, pill.Max, WithAlpha(fg, layer), r);
     motion::RippleDraw(id, dl, pill, fg, r);
-    TextCentered(dl, fontBold, 13.5f, pill.GetCenter(), fg, cap ? u8"Нажмите клавишу" : KeyName(*vk));
+    TextCentered(dl, fontBold, 13.5f, pill.GetCenter(), fg, cap ? L(u8"Нажмите клавишу") : KeyName(*vk));
     return changed;
 }
 

@@ -1,5 +1,6 @@
 #include "menu.h"
 #include "config.h"
+#include "i18n.h"
 #include "game.h"
 #include "render.h"
 #include "state.h"
@@ -67,11 +68,11 @@ template <class L, class R> void Columns2(const char* id, L&& left, R&& right) {
 
 void NotInGameHint() {
     if (InGame()) return;
-    if (m3::BeginCard(u8"Нет активной игры", icon::Info, u8"Функции ниже применятся после загрузки уровня")) {
+    if (m3::BeginCard(L(u8"Нет активной игры"), icon::Info, L(u8"Функции ниже применятся после загрузки уровня"))) {
         ImGuiWindow* w = GetCurrentWindow();
         motion::LoadingIndicator(w->DrawList, ImVec2(w->Pos.x + w->Size.x - 42.f, w->Pos.y + 34.f), 12.f, S.onPrimaryContainer,
                                  S.primaryContainer);
-        m3::Supporting(u8"Начните или продолжите игру — чит автоматически подключится к игроку, врагам и предметам.");
+        m3::Supporting(L(u8"Начните или продолжите игру — чит автоматически подключится к игроку, врагам и предметам."));
     }
     m3::EndCard();
 }
@@ -92,37 +93,37 @@ void ChamsEditor(const char* id, int* mode, float color[4], float hidden[4], boo
                  int* lastMaterial) {
     PushID(id);
     int group = *mode == 0 ? 0 : IsOutlineMode(*mode) ? 1 : 2;
-    if (m3::Segmented("type", &group, { u8"Выкл", u8"Контур", u8"Материал" })) {
+    if (m3::Segmented("type", &group, { L(u8"Выкл"), L(u8"Контур"), L(u8"Материал") })) {
         if (IsMaterialMode(*mode)) *lastMaterial = *mode;
         *mode = group == 0 ? 0 : group == 1 ? static_cast<int>(ChamsMode::OutlineSilhouette) : *lastMaterial;
     }
     Dummy(ImVec2(0, 2));
     if (IsOutlineMode(*mode)) {
         int sub = *mode - 1;
-        if (m3::Segmented("outline", &sub, { u8"Контур", u8"Силуэт", u8"Оба" })) *mode = sub + 1;
+        if (m3::Segmented("outline", &sub, { L(u8"Контур"), L(u8"Силуэт"), L(u8"Оба") })) *mode = sub + 1;
         Dummy(ImVec2(0, 2));
-        m3::ColorRow(u8"Цвет подсветки", color);
-        m3::Slider(u8"Толщина контура", width, 1.f, 10.f, "%.1f");
+        m3::ColorRow(L(u8"Цвет подсветки"), color);
+        m3::Slider(L(u8"Толщина контура"), width, 1.f, 10.f, "%.1f");
     } else if (IsMaterialMode(*mode)) {
-        m3::SectionLabel(u8"МАТЕРИАЛ");
+        m3::SectionLabel(L(u8"МАТЕРИАЛ"));
         m3::FlowBegin();
         for (const MaterialInfo& mi : kMaterials) {
             const bool sel = *mode == static_cast<int>(mi.mode);
-            m3::FlowNext(m3::ChipWidth(mi.name, sel ? theme::icon::Check : nullptr));
-            if (m3::Chip(mi.name, sel)) *mode = *lastMaterial = static_cast<int>(mi.mode);
-            if (IsItemHovered()) SetTooltip("%s", mi.hint);
+            m3::FlowNext(m3::ChipWidth(L(mi.name), sel ? theme::icon::Check : nullptr));
+            if (m3::Chip(L(mi.name), sel)) *mode = *lastMaterial = static_cast<int>(mi.mode);
+            if (IsItemHovered()) SetTooltip("%s", L(mi.hint));
         }
         for (const MaterialInfo& mi : kMaterials)
-            if (*mode == static_cast<int>(mi.mode)) m3::Supporting(mi.hint);
+            if (*mode == static_cast<int>(mi.mode)) m3::Supporting(L(mi.hint));
         Dummy(ImVec2(0, 2));
-        m3::ColorRow(*mode == static_cast<int>(ChamsMode::Xqz) ? u8"Цвет за стеной" : u8"Основной цвет", color);
-        if (UsesHiddenColor(*mode)) m3::ColorRow(u8"Цвет за стеной", hidden);
+        m3::ColorRow(*mode == static_cast<int>(ChamsMode::Xqz) ? L(u8"Цвет за стеной") : L(u8"Основной цвет"), color);
+        if (UsesHiddenColor(*mode)) m3::ColorRow(L(u8"Цвет за стеной"), hidden);
         if (*mode == static_cast<int>(ChamsMode::Glow) || *mode == static_cast<int>(ChamsMode::Neon))
-            m3::Slider(u8"Яркость свечения", &g_cfg.chamsGlow, 0.5f, 8.f, "%.1f");
+            m3::Slider(L(u8"Яркость свечения"), &g_cfg.chamsGlow, 0.5f, 8.f, "%.1f");
     }
     if (*mode != 0) {
-        m3::Switch(u8"Радуга", rainbow, u8"Плавная смена оттенков");
-        m3::Switch(u8"Пульсация", pulse, u8"Мерцание прозрачности");
+        m3::Switch(L(u8"Радуга"), rainbow, L(u8"Плавная смена оттенков"));
+        m3::Switch(L(u8"Пульсация"), pulse, L(u8"Мерцание прозрачности"));
     }
     PopID();
 }
@@ -130,42 +131,42 @@ void ChamsEditor(const char* id, int* mode, float color[4], float hidden[4], boo
 // --------------------------------------------------------------------------- Visual
 void PageVisual() {
     Columns2("vis", [] {
-        if (m3::BeginCard(u8"ESP врагов", icon::Eye, u8"Рамки, имена и дистанция")) {
-            m3::Switch(u8"Включить", &g_cfg.espEnemies);
-            m3::SectionLabel(u8"СТИЛЬ РАМКИ");
-            m3::Segmented("box", &g_cfg.enemyBox, { u8"Нет", u8"Рамка", u8"Углы" });
+        if (m3::BeginCard(L(u8"ESP врагов"), icon::Eye, L(u8"Рамки, имена и дистанция"))) {
+            m3::Switch(L(u8"Включить"), &g_cfg.espEnemies);
+            m3::SectionLabel(L(u8"СТИЛЬ РАМКИ"));
+            m3::Segmented("box", &g_cfg.enemyBox, { L(u8"Нет"), L(u8"Рамка"), L(u8"Углы") });
             Dummy(ImVec2(0, 4));
-            m3::Switch(u8"Имя", &g_cfg.enemyName);
-            m3::Switch(u8"Дистанция", &g_cfg.enemyDistance);
-            m3::Switch(u8"Состояние ИИ", &g_cfg.enemyState, u8"Погоня, поиск, заморозка");
-            m3::Switch(u8"Линии к врагам", &g_cfg.enemySnaplines);
-            m3::Switch(u8"Стрелки за экраном", &g_cfg.enemyOffscreen, u8"Указывают на врагов вне поля зрения");
-            m3::ColorRow(u8"Цвет", g_cfg.enemyColor);
-            m3::Slider(u8"Дальность", &g_cfg.enemyMaxDist, 10.f, 500.f, u8"%.0f м");
+            m3::Switch(L(u8"Имя"), &g_cfg.enemyName);
+            m3::Switch(L(u8"Дистанция"), &g_cfg.enemyDistance);
+            m3::Switch(L(u8"Состояние ИИ"), &g_cfg.enemyState, L(u8"Погоня, поиск, заморозка"));
+            m3::Switch(L(u8"Линии к врагам"), &g_cfg.enemySnaplines);
+            m3::Switch(L(u8"Стрелки за экраном"), &g_cfg.enemyOffscreen, L(u8"Указывают на врагов вне поля зрения"));
+            m3::ColorRow(L(u8"Цвет"), g_cfg.enemyColor);
+            m3::Slider(L(u8"Дальность"), &g_cfg.enemyMaxDist, 10.f, 500.f, L(u8"%.0f м"));
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Радар", icon::Location, u8"Вид сверху вокруг игрока")) {
-            m3::Switch(u8"Мини-радар", &g_cfg.radar);
-            m3::Slider(u8"Размер", &g_cfg.radarSize, 120.f, 320.f, "%.0f px");
-            m3::Slider(u8"Охват", &g_cfg.radarRange, 10.f, 120.f, u8"%.0f м");
+        if (m3::BeginCard(L(u8"Радар"), icon::Location, L(u8"Вид сверху вокруг игрока"))) {
+            m3::Switch(L(u8"Мини-радар"), &g_cfg.radar);
+            m3::Slider(L(u8"Размер"), &g_cfg.radarSize, 120.f, 320.f, "%.0f px");
+            m3::Slider(L(u8"Охват"), &g_cfg.radarRange, 10.f, 120.f, L(u8"%.0f м"));
         }
         m3::EndCard();
     }, [] {
-        if (m3::BeginCard(u8"Chams врагов", icon::Palette, u8"Подсветка моделей сквозь стены")) {
+        if (m3::BeginCard(L(u8"Chams врагов"), icon::Palette, L(u8"Подсветка моделей сквозь стены"))) {
             static int lastMat = static_cast<int>(ChamsMode::TwoTone);
             ChamsEditor("ech", &g_cfg.enemyChams, g_cfg.enemyChamsColor, g_cfg.enemyChamsHidden, &g_cfg.enemyChamsRainbow,
                         &g_cfg.enemyChamsPulse, &g_cfg.enemyOutlineWidth, &lastMat);
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"ESP предметов", icon::Package, u8"Ключи, инструменты и оружие на карте")) {
-            m3::Switch(u8"Включить", &g_cfg.espItems);
-            m3::Switch(u8"Дистанция", &g_cfg.itemDistance);
-            m3::ColorRow(u8"Цвет", g_cfg.itemColor);
-            m3::Slider(u8"Дальность", &g_cfg.itemMaxDist, 5.f, 200.f, u8"%.0f м");
-            m3::SearchField("##itemfilter", u8"Фильтр по названию", g_cfg.itemFilter, sizeof(g_cfg.itemFilter));
+        if (m3::BeginCard(L(u8"ESP предметов"), icon::Package, L(u8"Ключи, инструменты и оружие на карте"))) {
+            m3::Switch(L(u8"Включить"), &g_cfg.espItems);
+            m3::Switch(L(u8"Дистанция"), &g_cfg.itemDistance);
+            m3::ColorRow(L(u8"Цвет"), g_cfg.itemColor);
+            m3::Slider(L(u8"Дальность"), &g_cfg.itemMaxDist, 5.f, 200.f, L(u8"%.0f м"));
+            m3::SearchField("##itemfilter", L(u8"Фильтр по названию"), g_cfg.itemFilter, sizeof(g_cfg.itemFilter));
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Chams предметов", icon::Palette, u8"Работает в пределах дальности ESP")) {
+        if (m3::BeginCard(L(u8"Chams предметов"), icon::Palette, L(u8"Работает в пределах дальности ESP"))) {
             static int lastMat = static_cast<int>(ChamsMode::Glow);
             ChamsEditor("ich", &g_cfg.itemChams, g_cfg.itemChamsColor, g_cfg.itemChamsHidden, &g_cfg.itemChamsRainbow,
                         &g_cfg.itemChamsPulse, &g_cfg.itemOutlineWidth, &lastMat);
@@ -178,39 +179,39 @@ void PageVisual() {
 void PagePlayer() {
     NotInGameHint();
     Columns2("ply", [] {
-        if (m3::BeginCard(u8"Выживание", icon::Shield)) {
-            m3::Switch(u8"Бессмертие", &g_cfg.godmode, u8"Отменяет поимку, удары и ловушки");
-            m3::Switch(u8"Невидимость", &g_cfg.invisible, u8"Granny, Grandpa и мама-паук вас не видят");
+        if (m3::BeginCard(L(u8"Выживание"), icon::Shield)) {
+            m3::Switch(L(u8"Бессмертие"), &g_cfg.godmode, L(u8"Отменяет поимку, удары и ловушки"));
+            m3::Switch(L(u8"Невидимость"), &g_cfg.invisible, L(u8"Granny, Grandpa и мама-паук вас не видят"));
             Dummy(ImVec2(0, 2));
-            if (m3::Button(u8"Сбросить погоню", Btn::Tonal, 0, icon::Refresh)) game::StopAllChases();
+            if (m3::Button(L(u8"Сбросить погоню"), Btn::Tonal, 0, icon::Refresh)) game::StopAllChases();
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Камера", icon::Camera)) {
-            m3::Switch(u8"Свой угол обзора", &g_cfg.fovOn);
+        if (m3::BeginCard(L(u8"Камера"), icon::Camera)) {
+            m3::Switch(L(u8"Свой угол обзора"), &g_cfg.fovOn);
             m3::Slider("FOV", &g_cfg.fov, 50.f, 130.f, u8"%.0f°");
         }
         m3::EndCard();
     }, [] {
-        if (m3::BeginCard(u8"Движение", icon::Run)) {
-            m3::Switch("Speedhack", &g_cfg.speedhack, u8"Ускоряет ходьбу и бег");
-            m3::Slider(u8"Множитель", &g_cfg.speedMult, 1.f, 6.f, "x%.1f");
-            m3::Switch("Noclip", &g_cfg.noclip, u8"Полёт сквозь стены");
-            m3::Slider(u8"Скорость полёта", &g_cfg.noclipSpeed, 2.f, 30.f, u8"%.0f м/с");
-            m3::Supporting(u8"WASD — направление, Space/E — вверх, Ctrl/Q — вниз, Shift — быстрее.");
+        if (m3::BeginCard(L(u8"Движение"), icon::Run)) {
+            m3::Switch("Speedhack", &g_cfg.speedhack, L(u8"Ускоряет ходьбу и бег"));
+            m3::Slider(L(u8"Множитель"), &g_cfg.speedMult, 1.f, 6.f, "x%.1f");
+            m3::Switch("Noclip", &g_cfg.noclip, L(u8"Полёт сквозь стены"));
+            m3::Slider(L(u8"Скорость полёта"), &g_cfg.noclipSpeed, 2.f, 30.f, L(u8"%.0f м/с"));
+            m3::Supporting(L(u8"WASD — направление, Space/E — вверх, Ctrl/Q — вниз, Shift — быстрее."));
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Телепорт", icon::Pin)) {
+        if (m3::BeginCard(L(u8"Телепорт"), icon::Pin)) {
             if (g_snap.hasSavedPoint) {
                 char buf[96];
-                std::snprintf(buf, sizeof(buf), u8"Точка: %.1f, %.1f, %.1f", g_snap.savedPoint.x, g_snap.savedPoint.y, g_snap.savedPoint.z);
+                std::snprintf(buf, sizeof(buf), L(u8"Точка: %.1f, %.1f, %.1f"), g_snap.savedPoint.x, g_snap.savedPoint.y, g_snap.savedPoint.z);
                 m3::Supporting(buf);
             } else {
-                m3::Supporting(u8"Точка не сохранена");
+                m3::Supporting(L(u8"Точка не сохранена"));
             }
             Dummy(ImVec2(0, 2));
-            if (m3::Button(u8"Сохранить точку", Btn::Tonal, 0, icon::Save)) game::SavePoint();
+            if (m3::Button(L(u8"Сохранить точку"), Btn::Tonal, 0, icon::Save)) game::SavePoint();
             SameLine();
-            if (m3::Button(u8"Телепорт", Btn::Filled, 0, icon::Location)) game::TeleportToSaved();
+            if (m3::Button(L(u8"Телепорт"), Btn::Filled, 0, icon::Location)) game::TeleportToSaved();
         }
         m3::EndCard();
     });
@@ -220,16 +221,16 @@ void PagePlayer() {
 void PageWeapons() {
     NotInGameHint();
     Columns2("wpn", [] {
-        if (m3::BeginCard(u8"Выдать оружие", icon::Bolt, u8"Текущий предмет будет выброшен")) {
+        if (m3::BeginCard(L(u8"Выдать оружие"), icon::Bolt, L(u8"Текущий предмет будет выброшен"))) {
             struct W { const char* label; game::Special s; };
             const W weapons[] = {
-                { u8"Арбалет", game::Special::Crossbow },
-                { u8"Двустволка", game::Special::DoubleShotgun },
-                { u8"Дробовик", game::Special::Shotgun },
-                { u8"Перцовый баллончик", game::Special::PepperSpray },
-                { u8"Электрошокер", game::Special::Baton },
-                { u8"Ледяная ловушка", game::Special::FreezeTrap },
-                { u8"Ядовитая ловушка", game::Special::PoisonTrap },
+                { L(u8"Арбалет"), game::Special::Crossbow },
+                { L(u8"Двустволка"), game::Special::DoubleShotgun },
+                { L(u8"Дробовик"), game::Special::Shotgun },
+                { L(u8"Перцовый баллончик"), game::Special::PepperSpray },
+                { L(u8"Электрошокер"), game::Special::Baton },
+                { L(u8"Ледяная ловушка"), game::Special::FreezeTrap },
+                { L(u8"Ядовитая ловушка"), game::Special::PoisonTrap },
             };
             m3::FlowBegin();
             for (const W& w : weapons) {
@@ -238,39 +239,39 @@ void PageWeapons() {
             }
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"В руках", icon::Package)) {
-            m3::Badge(g_snap.heldItem.empty() ? u8"Пусто" : g_snap.heldItem.c_str(), S.primaryContainer, S.onPrimaryContainer);
+        if (m3::BeginCard(L(u8"В руках"), icon::Package)) {
+            m3::Badge(g_snap.heldItem.empty() ? L(u8"Пусто") : g_snap.heldItem.c_str(), S.primaryContainer, S.onPrimaryContainer);
             char buf[160];
-            std::snprintf(buf, sizeof(buf), u8"Двустволка: %.0f/2   ·   Дробовик: %s   ·   Арбалет: %s   ·   Баллончик: %.0f",
-                          g_snap.ammo, g_snap.shotgunLoaded ? u8"заряжен" : u8"пуст", g_snap.crossbowCharged ? u8"заряжен" : u8"пуст",
+            std::snprintf(buf, sizeof(buf), L(u8"Двустволка: %.0f/2   ·   Дробовик: %s   ·   Арбалет: %s   ·   Баллончик: %.0f"),
+                          g_snap.ammo, g_snap.shotgunLoaded ? L(u8"заряжен") : L(u8"пуст"), g_snap.crossbowCharged ? L(u8"заряжен") : L(u8"пуст"),
                           g_snap.spray);
             m3::Supporting(buf);
         }
         m3::EndCard();
     }, [] {
-        if (m3::BeginCard(u8"Боезапас", icon::Shield)) {
-            m3::Switch(u8"Бесконечные патроны", &g_cfg.infiniteAmmo, u8"Арбалет, оба дробовика и баллончик");
-            m3::Switch(u8"Заряженные дротики", &g_cfg.electricDarts, u8"Дротики арбалета бьют током");
+        if (m3::BeginCard(L(u8"Боезапас"), icon::Shield)) {
+            m3::Switch(L(u8"Бесконечные патроны"), &g_cfg.infiniteAmmo, L(u8"Арбалет, оба дробовика и баллончик"));
+            m3::Switch(L(u8"Заряженные дротики"), &g_cfg.electricDarts, L(u8"Дротики арбалета бьют током"));
         }
         m3::EndCard();
-        if (m3::BeginCard("Aimbot", icon::Location, u8"Цель — враг ближе всего к прицелу")) {
-            m3::Switch(u8"Наводка камеры", &g_cfg.aimCamera, u8"Пока зажата клавиша наводки");
-            m3::KeyBind(u8"Клавиша наводки", &g_cfg.aimKey);
-            m3::Slider(u8"Плавность", &g_cfg.aimSmooth, 1.f, 20.f, "%.1f");
-            m3::Switch("Silent aim", &g_cfg.silentAim, u8"Пули и дротики летят в цель, камера не двигается");
-            m3::SectionLabel(u8"ТОЧКА ПРИЦЕЛИВАНИЯ");
-            m3::Segmented("bone", &g_cfg.aimBone, { u8"Голова", u8"Грудь", u8"Центр" });
+        if (m3::BeginCard("Aimbot", icon::Location, L(u8"Цель — враг ближе всего к прицелу"))) {
+            m3::Switch(L(u8"Наводка камеры"), &g_cfg.aimCamera, L(u8"Пока зажата клавиша наводки"));
+            m3::KeyBind(L(u8"Клавиша наводки"), &g_cfg.aimKey);
+            m3::Slider(L(u8"Плавность"), &g_cfg.aimSmooth, 1.f, 20.f, "%.1f");
+            m3::Switch("Silent aim", &g_cfg.silentAim, L(u8"Пули и дротики летят в цель, камера не двигается"));
+            m3::SectionLabel(L(u8"ТОЧКА ПРИЦЕЛИВАНИЯ"));
+            m3::Segmented("bone", &g_cfg.aimBone, { L(u8"Голова"), L(u8"Грудь"), L(u8"Центр") });
             Dummy(ImVec2(0, 2));
-            m3::Slider(u8"Угол захвата", &g_cfg.aimFov, 1.f, 90.f, u8"%.0f°");
-            m3::Slider(u8"Дальность", &g_cfg.aimMaxDist, 5.f, 150.f, u8"%.0f м");
-            m3::Switch(u8"Показывать круг", &g_cfg.aimDrawFov);
-            m3::Switch(u8"Пропускать замороженных", &g_cfg.aimIgnoreFrozen);
+            m3::Slider(L(u8"Угол захвата"), &g_cfg.aimFov, 1.f, 90.f, u8"%.0f°");
+            m3::Slider(L(u8"Дальность"), &g_cfg.aimMaxDist, 5.f, 150.f, L(u8"%.0f м"));
+            m3::Switch(L(u8"Показывать круг"), &g_cfg.aimDrawFov);
+            m3::Switch(L(u8"Пропускать замороженных"), &g_cfg.aimIgnoreFrozen);
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Скорострельность", icon::Clock)) {
-            m3::Switch("Rapid fire", &g_cfg.rapidFire, u8"Зажмите кнопку выстрела");
-            m3::SliderInt(u8"Интервал", &g_cfg.rapidIntervalMs, 40, 800, u8"%d мс");
-            m3::Supporting(u8"Стреляет без анимации перезарядки. Для арбалета — без ожидания заряда.");
+        if (m3::BeginCard(L(u8"Скорострельность"), icon::Clock)) {
+            m3::Switch("Rapid fire", &g_cfg.rapidFire, L(u8"Зажмите кнопку выстрела"));
+            m3::SliderInt(L(u8"Интервал"), &g_cfg.rapidIntervalMs, 40, 800, L(u8"%d мс"));
+            m3::Supporting(L(u8"Стреляет без анимации перезарядки. Для арбалета — без ожидания заряда."));
         }
         m3::EndCard();
     });
@@ -279,16 +280,16 @@ void PageWeapons() {
 // --------------------------------------------------------------------------- Items
 void PageItems() {
     NotInGameHint();
-    if (m3::BeginCard(u8"Выдача предметов", icon::Package, u8"Список берётся прямо из инвентаря игры")) {
-        m3::Badge(g_snap.heldItem.empty() ? u8"В руках: пусто" : (u8"В руках: " + g_snap.heldItem).c_str(), S.primaryContainer,
+    if (m3::BeginCard(L(u8"Выдача предметов"), icon::Package, L(u8"Список берётся прямо из инвентаря игры"))) {
+        m3::Badge(g_snap.heldItem.empty() ? L(u8"В руках: пусто") : (L(u8"В руках: ") + g_snap.heldItem).c_str(), S.primaryContainer,
                   S.onPrimaryContainer);
         SameLine();
-        if (m3::Button(u8"Выбросить", Btn::Text)) game::DropHeld();
-        m3::Switch(u8"Автоприменение", &g_cfg.autoUse,
-                   u8"Нужный ключ или инструмент применяется сам, если его нет в руках");
-        m3::SearchField("##itemsearch", u8"Поиск предмета", g_itemSearch, sizeof(g_itemSearch));
+        if (m3::Button(L(u8"Выбросить"), Btn::Text)) game::DropHeld();
+        m3::Switch(L(u8"Автоприменение"), &g_cfg.autoUse,
+                   L(u8"Нужный ключ или инструмент применяется сам, если его нет в руках"));
+        m3::SearchField("##itemsearch", L(u8"Поиск предмета"), g_itemSearch, sizeof(g_itemSearch));
         Dummy(ImVec2(0, 2));
-        if (g_snap.giveList.empty()) m3::Supporting(u8"Список появится после загрузки уровня.");
+        if (g_snap.giveList.empty()) m3::Supporting(L(u8"Список появится после загрузки уровня."));
         m3::FlowBegin();
         for (const GiveEntry& e : g_snap.giveList) {
             if (!Matches(e.label, g_itemSearch) && !Matches(e.itemName, g_itemSearch)) continue;
@@ -302,7 +303,7 @@ void PageItems() {
     }
     m3::EndCard();
 
-    if (m3::BeginCard(u8"Предметы на карте", icon::Location, u8"Ближайшие к вам — телепорт или притянуть к себе")) {
+    if (m3::BeginCard(L(u8"Предметы на карте"), icon::Location, L(u8"Ближайшие к вам — телепорт или притянуть к себе"))) {
         int shown = 0;
         if (BeginTable("worlditems", 3, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_RowBg)) {
             TableSetupColumn("name", ImGuiTableColumnFlags_WidthStretch, 1.f);
@@ -320,17 +321,17 @@ void PageItems() {
                 Text("%s", it.name.c_str());
                 TableNextColumn();
                 AlignTextToFramePadding();
-                TextColored(ToVec4(S.onSurfaceVariant), u8"%.0f м", it.dist);
+                TextColored(ToVec4(S.onSurfaceVariant), L(u8"%.0f м"), it.dist);
                 TableNextColumn();
-                if (m3::IconButton("tp", icon::Location, false, u8"Телепорт к предмету")) game::TeleportToItem(it.id);
+                if (m3::IconButton("tp", icon::Location, false, L(u8"Телепорт к предмету"))) game::TeleportToItem(it.id);
                 SameLine(0, 4);
-                if (m3::IconButton("bring", icon::Download, true, u8"Притянуть к себе")) game::BringItem(it.id);
+                if (m3::IconButton("bring", icon::Download, true, L(u8"Притянуть к себе"))) game::BringItem(it.id);
                 PopID();
             }
             PopStyleColor(2);
             EndTable();
         }
-        if (!shown) m3::Supporting(u8"Предметов поблизости нет.");
+        if (!shown) m3::Supporting(L(u8"Предметов поблизости нет."));
     }
     m3::EndCard();
 }
@@ -339,22 +340,22 @@ void PageItems() {
 void EnemyCard(const EnemyView& e) {
     PushID(reinterpret_cast<void*>(e.id));
     char sub[96];
-    std::snprintf(sub, sizeof(sub), u8"%s%s%.0f м", e.state.c_str(), e.state.empty() ? "" : u8"  ·  ", e.dist);
+    std::snprintf(sub, sizeof(sub), L(u8"%s%s%.0f м"), e.state.c_str(), e.state.empty() ? "" : u8"  ·  ", e.dist);
     char title[96];
     std::snprintf(title, sizeof(title), "%s##card", e.name.c_str());
     if (m3::BeginCard(title, icon::Bug, sub)) {
         using A = game::EnemyAction;
         struct Act { const char* label; A action; uint32_t cap; Btn style; const char* ic; };
         const Act acts[] = {
-            { e.frozenSingle ? u8"Разморозить" : u8"Заморозить", A::ToggleFreeze, 0, e.frozenSingle ? Btn::Filled : Btn::Tonal, icon::Snow },
-            { u8"Нокаут", A::Knockout, CAP_KNOCKOUT, Btn::Tonal, nullptr },
-            { u8"Перец", A::Pepper, CAP_PEPPER, Btn::Tonal, nullptr },
-            { u8"Лёд", A::FreezeFx, CAP_FREEZEFX, Btn::Tonal, nullptr },
-            { u8"Погоня", A::Chase, CAP_CHASE, Btn::Outlined, nullptr },
-            { u8"Стоп", A::StopChase, CAP_CHASE, Btn::Outlined, nullptr },
-            { u8"Ко мне", A::TeleportToMe, CAP_MOVE, Btn::Outlined, icon::Location },
-            { u8"На точку", A::TeleportToPoint, CAP_MOVE, Btn::Outlined, icon::Pin },
-            { u8"Убить", A::Kill, CAP_KILL, Btn::Error, nullptr },
+            { e.frozenSingle ? L(u8"Разморозить") : L(u8"Заморозить"), A::ToggleFreeze, 0, e.frozenSingle ? Btn::Filled : Btn::Tonal, icon::Snow },
+            { L(u8"Нокаут"), A::Knockout, CAP_KNOCKOUT, Btn::Tonal, nullptr },
+            { L(u8"Перец"), A::Pepper, CAP_PEPPER, Btn::Tonal, nullptr },
+            { L(u8"Лёд"), A::FreezeFx, CAP_FREEZEFX, Btn::Tonal, nullptr },
+            { L(u8"Погоня"), A::Chase, CAP_CHASE, Btn::Outlined, nullptr },
+            { L(u8"Стоп"), A::StopChase, CAP_CHASE, Btn::Outlined, nullptr },
+            { L(u8"Ко мне"), A::TeleportToMe, CAP_MOVE, Btn::Outlined, icon::Location },
+            { L(u8"На точку"), A::TeleportToPoint, CAP_MOVE, Btn::Outlined, icon::Pin },
+            { L(u8"Убить"), A::Kill, CAP_KILL, Btn::Error, nullptr },
         };
         m3::FlowBegin();
         for (const Act& a : acts) {
@@ -362,8 +363,8 @@ void EnemyCard(const EnemyView& e) {
             m3::FlowNext(m3::ButtonWidth(a.label, a.ic));
             if (m3::Button(a.label, a.style, 0, a.ic)) game::DoEnemyAction(e.id, a.action);
         }
-        m3::FlowNext(m3::ButtonWidth(u8"ТП к нему", icon::Location));
-        if (m3::Button(u8"ТП к нему", Btn::Text, 0, icon::Location)) game::TeleportToEnemy(e.id);
+        m3::FlowNext(m3::ButtonWidth(L(u8"ТП к нему"), icon::Location));
+        if (m3::Button(L(u8"ТП к нему"), Btn::Text, 0, icon::Location)) game::TeleportToEnemy(e.id);
     }
     m3::EndCard();
     PopID();
@@ -371,20 +372,20 @@ void EnemyCard(const EnemyView& e) {
 
 void PageEnemies() {
     NotInGameHint();
-    if (m3::BeginCard(u8"Глобально", icon::Bug, u8"Действует на всех врагов уровня")) {
+    if (m3::BeginCard(L(u8"Глобально"), icon::Bug, L(u8"Действует на всех врагов уровня"))) {
         Columns2("aiglob", [] {
-            m3::Switch(u8"Заморозить всех", &g_cfg.freezeAll, u8"ИИ, анимации и навигация на паузе");
-            m3::Switch(u8"Невидимость", &g_cfg.invisible, u8"Враги не замечают игрока");
+            m3::Switch(L(u8"Заморозить всех"), &g_cfg.freezeAll, L(u8"ИИ, анимации и навигация на паузе"));
+            m3::Switch(L(u8"Невидимость"), &g_cfg.invisible, L(u8"Враги не замечают игрока"));
         }, [] {
-            m3::Switch(u8"Скорость врагов", &g_cfg.enemySpeedOn, u8"Множитель ходьбы и бега");
-            m3::Slider(u8"Множитель", &g_cfg.enemySpeedMult, 0.f, 3.f, "x%.2f");
+            m3::Switch(L(u8"Скорость врагов"), &g_cfg.enemySpeedOn, L(u8"Множитель ходьбы и бега"));
+            m3::Slider(L(u8"Множитель"), &g_cfg.enemySpeedMult, 0.f, 3.f, "x%.2f");
         });
-        if (m3::Button(u8"Сбросить погоню", Btn::Tonal, 0, icon::Refresh)) game::StopAllChases();
+        if (m3::Button(L(u8"Сбросить погоню"), Btn::Tonal, 0, icon::Refresh)) game::StopAllChases();
     }
     m3::EndCard();
 
     if (g_snap.enemies.empty()) {
-        if (m3::BeginCard(u8"Врагов не найдено", icon::Info)) m3::Supporting(u8"На уровне сейчас нет активных врагов.");
+        if (m3::BeginCard(L(u8"Врагов не найдено"), icon::Info)) m3::Supporting(L(u8"На уровне сейчас нет активных врагов."));
         m3::EndCard();
         return;
     }
@@ -403,16 +404,16 @@ void PageEnemies() {
 void PageWorld() {
     NotInGameHint();
     Columns2("world", [] {
-        if (m3::BeginCard(u8"Освещение", icon::Brightness)) {
-            m3::Switch(u8"Яркий мир", &g_cfg.fullbright, u8"Равномерный свет без теней-ловушек");
-            m3::Slider(u8"Яркость", &g_cfg.fullbrightLevel, 0.1f, 1.5f, "%.2f");
-            m3::Switch(u8"Без тумана", &g_cfg.noFog);
+        if (m3::BeginCard(L(u8"Освещение"), icon::Brightness)) {
+            m3::Switch(L(u8"Яркий мир"), &g_cfg.fullbright, L(u8"Равномерный свет без теней-ловушек"));
+            m3::Slider(L(u8"Яркость"), &g_cfg.fullbrightLevel, 0.1f, 1.5f, "%.2f");
+            m3::Switch(L(u8"Без тумана"), &g_cfg.noFog);
         }
         m3::EndCard();
     }, [] {
-        if (m3::BeginCard(u8"Время", icon::Clock)) {
-            m3::Switch(u8"Скорость игры", &g_cfg.timescaleOn, u8"Замедление или ускорение всего мира");
-            m3::Slider(u8"Множитель", &g_cfg.timescale, 0.1f, 5.f, "x%.2f");
+        if (m3::BeginCard(L(u8"Время"), icon::Clock)) {
+            m3::Switch(L(u8"Скорость игры"), &g_cfg.timescaleOn, L(u8"Замедление или ускорение всего мира"));
+            m3::Slider(L(u8"Множитель"), &g_cfg.timescale, 0.1f, 5.f, "x%.2f");
         }
         m3::EndCard();
     });
@@ -444,46 +445,51 @@ void SeedSwatches() {
 
 void PageSettings() {
     Columns2("set", [] {
-        if (m3::BeginCard(u8"Тема Material You", icon::Palette, u8"Палитра строится из одного цвета")) {
-            SeedSwatches();
-            Dummy(ImVec2(0, 4));
-            m3::Slider(u8"Оттенок", &g_cfg.seedHue, 0.f, 360.f, u8"%.0f°");
-            m3::Slider(u8"Насыщенность", &g_cfg.seedChroma, 0.f, 1.f, "%.2f");
-            m3::Switch(u8"Светлая тема", &g_cfg.lightTheme);
-            m3::SectionLabel(u8"УВЕДОМЛЕНИЯ");
-            m3::Segmented("toast", &g_cfg.toastStyle, { u8"Как тема", u8"Контрастные" });
+        if (m3::BeginCard(L(u8"Язык"), icon::Globe, u8"Русский · English")) {
+            // both names stay in their own language so the switch is findable either way
+            m3::Segmented("lang", &g_cfg.language, { u8"Русский", "English" });
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Материал окна", icon::Brightness, u8"Прозрачность и размытие фона под меню")) {
-            m3::Segmented("glass", &g_cfg.glassMode, { u8"Нет", u8"Стекло", u8"Матовое", u8"Акрил" });
-            const char* hints[] = { u8"Просто полупрозрачный фон — игра видна чётко",
-                                    u8"Лёгкое размытие, блик сверху и светлый ободок",
-                                    u8"Сильное размытие с мелким зерном",
-                                    u8"Размытие, зерно и выравнивающий тон, как в Windows 11" };
+        if (m3::BeginCard(L(u8"Тема Material You"), icon::Palette, L(u8"Палитра строится из одного цвета"))) {
+            SeedSwatches();
+            Dummy(ImVec2(0, 4));
+            m3::Slider(L(u8"Оттенок"), &g_cfg.seedHue, 0.f, 360.f, u8"%.0f°");
+            m3::Slider(L(u8"Насыщенность"), &g_cfg.seedChroma, 0.f, 1.f, "%.2f");
+            m3::Switch(L(u8"Светлая тема"), &g_cfg.lightTheme);
+            m3::SectionLabel(L(u8"УВЕДОМЛЕНИЯ"));
+            m3::Segmented("toast", &g_cfg.toastStyle, { L(u8"Как тема"), L(u8"Контрастные") });
+        }
+        m3::EndCard();
+        if (m3::BeginCard(L(u8"Материал окна"), icon::Brightness, L(u8"Прозрачность и размытие фона под меню"))) {
+            m3::Segmented("glass", &g_cfg.glassMode, { L(u8"Нет"), L(u8"Стекло"), L(u8"Матовое"), L(u8"Акрил") });
+            const char* hints[] = { L(u8"Просто полупрозрачный фон — игра видна чётко"),
+                                    L(u8"Лёгкое размытие, блик сверху и светлый ободок"),
+                                    L(u8"Сильное размытие с мелким зерном"),
+                                    L(u8"Размытие, зерно и выравнивающий тон, как в Windows 11") };
             m3::Supporting(hints[ImClamp(g_cfg.glassMode, 0, 3)]);
             Dummy(ImVec2(0, 2));
             float transparency = g_cfg.menuTransparency * 100.f;
-            if (m3::Slider(u8"Прозрачность", &transparency, 0.f, 80.f, "%.0f%%")) g_cfg.menuTransparency = transparency / 100.f;
-            if (g_cfg.glassMode != 0) m3::Slider(u8"Сила размытия", &g_cfg.blurStrength, 0.f, 1.f, "%.2f");
+            if (m3::Slider(L(u8"Прозрачность"), &transparency, 0.f, 80.f, "%.0f%%")) g_cfg.menuTransparency = transparency / 100.f;
+            if (g_cfg.glassMode != 0) m3::Slider(L(u8"Сила размытия"), &g_cfg.blurStrength, 0.f, 1.f, "%.2f");
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Конфигурация", icon::Folder, u8"granny_menu.ini рядом с DLL")) {
-            if (m3::Button(u8"Сохранить", Btn::Filled, 0, icon::Save))
-                state::Notify(SaveConfig(g_configPath) ? u8"Конфиг сохранён" : u8"Не удалось сохранить конфиг");
+        if (m3::BeginCard(L(u8"Конфигурация"), icon::Folder, L(u8"granny_menu.ini рядом с DLL"))) {
+            if (m3::Button(L(u8"Сохранить"), Btn::Filled, 0, icon::Save))
+                state::Notify(SaveConfig(g_configPath) ? L(u8"Конфиг сохранён") : L(u8"Не удалось сохранить конфиг"));
             SameLine();
-            if (m3::Button(u8"Загрузить", Btn::Outlined, 0, icon::Folder))
-                state::Notify(LoadConfig(g_configPath) ? u8"Конфиг загружен" : u8"Файл конфига не найден");
+            if (m3::Button(L(u8"Загрузить"), Btn::Outlined, 0, icon::Folder))
+                state::Notify(LoadConfig(g_configPath) ? L(u8"Конфиг загружен") : L(u8"Файл конфига не найден"));
         }
         m3::EndCard();
     }, [] {
-        if (m3::BeginCard(u8"Горячие клавиши", icon::Keyboard, u8"Esc или Backspace — сбросить")) {
-            m3::KeyBind(u8"Меню", &g_cfg.keyMenu);
-            m3::KeyBind(u8"Выгрузить чит", &g_cfg.keyUnload);
+        if (m3::BeginCard(L(u8"Горячие клавиши"), icon::Keyboard, L(u8"Esc или Backspace — сбросить"))) {
+            m3::KeyBind(L(u8"Меню"), &g_cfg.keyMenu);
+            m3::KeyBind(L(u8"Выгрузить чит"), &g_cfg.keyUnload);
         }
         m3::EndCard();
-        if (m3::BeginCard(u8"Быстрый доступ", icon::Bolt, u8"Кнопка-панель и горячие клавиши функций")) {
-            m3::Switch(u8"Кнопка быстрого доступа", &g_cfg.fabEnabled, u8"Круглая кнопка в углу меню");
-            m3::Supporting(u8"«Панель» — показывать функцию на кнопке (до 8). Клавиша переключает функцию в любой момент.");
+        if (m3::BeginCard(L(u8"Быстрый доступ"), icon::Bolt, L(u8"Кнопка-панель и горячие клавиши функций"))) {
+            m3::Switch(L(u8"Кнопка быстрого доступа"), &g_cfg.fabEnabled, L(u8"Круглая кнопка в углу меню"));
+            m3::Supporting(L(u8"«Панель» — показывать функцию на кнопке (до 8). Клавиша переключает функцию в любой момент."));
             Dummy(ImVec2(0, 2));
             if (BeginTable("quick", 2, ImGuiTableFlags_SizingStretchProp)) {
                 TableSetupColumn("bind", ImGuiTableColumnFlags_WidthStretch, 1.f);
@@ -493,12 +499,12 @@ void PageSettings() {
                     PushID(i);
                     TableNextRow();
                     TableNextColumn();
-                    const std::string label = std::string(t.icon) + "   " + t.label;
+                    const std::string label = std::string(t.icon) + "   " + L(t.label);
                     m3::KeyBind(label.c_str(), &g_cfg.toggleKeys[i], 96.f);
                     TableNextColumn();
                     SetCursorPosY(GetCursorPosY() + 4.f);
                     const bool inPanel = (g_cfg.quickMask & (1 << i)) != 0;
-                    if (m3::Chip(u8"Панель", inPanel)) g_cfg.quickMask ^= (1 << i);
+                    if (m3::Chip(L(u8"Панель"), inPanel)) g_cfg.quickMask ^= (1 << i);
                     PopID();
                 }
                 EndTable();
@@ -506,9 +512,9 @@ void PageSettings() {
         }
         m3::EndCard();
         if (m3::BeginCard("Granny Legacy Menu", icon::Info, u8"IL2CPP · Unity 2022.3 · D3D11")) {
-            m3::Supporting(u8"Все функции работают через имена классов и методов игры, без жёстко прописанных адресов.");
+            m3::Supporting(L(u8"Все функции работают через имена классов и методов игры, без жёстко прописанных адресов."));
             Dummy(ImVec2(0, 2));
-            if (m3::Button(u8"Выгрузить чит", Btn::Error, 0, icon::Power)) render::g_unloadRequested = true;
+            if (m3::Button(L(u8"Выгрузить чит"), Btn::Error, 0, icon::Power)) render::g_unloadRequested = true;
         }
         m3::EndCard();
     });
@@ -529,10 +535,10 @@ void DrawRail(float height) {
     const ImVec2 itemsTop = GetCursorScreenPos();
     m3::RailIndicator(w->DrawList, ImVec2(itemsTop.x + 48.f, itemsTop.y + g_page * (62.f + 4.f)));
     for (int i = 0; i < PCount; ++i)
-        if (m3::RailItem(kPages[i].icon, kPages[i].rail, g_page == i)) g_page = i;
+        if (m3::RailItem(kPages[i].icon, L(kPages[i].rail), g_page == i)) g_page = i;
     SetCursorPosY(height - 56.f);
     SetCursorPosX(28.f);
-    if (m3::IconButton("##unload", icon::Power, false, u8"Выгрузить чит")) render::g_unloadRequested = true;
+    if (m3::IconButton("##unload", icon::Power, false, L(u8"Выгрузить чит"))) render::g_unloadRequested = true;
     EndChild();
     PopStyleVar();
 }
@@ -576,7 +582,7 @@ void DrawFab(ImVec2 anchorBR) {
         const ToggleDef& q = Toggles()[ids[k]];
         const int key = g_cfg.toggleKeys[ids[k]];
         const char* keyName = key ? m3::KeyName(key) : nullptr;
-        const ImVec2 ts = fontBold->CalcTextSizeA(14.f, FLT_MAX, 0, q.label);
+        const ImVec2 ts = fontBold->CalcTextSizeA(14.f, FLT_MAX, 0, L(q.label));
         const ImVec2 ks = keyName ? fontBold->CalcTextSizeA(11.5f, FLT_MAX, 0, keyName) : ImVec2(0, 0);
         const float wItem = ts.x + 68.f + (keyName ? ks.x + 22.f : 0.f);
         const float y = anchorBR.y - fab - (k + 1) * (itemH + gap) + (1.f - ti) * 22.f;
@@ -594,7 +600,7 @@ void DrawFab(ImVec2 anchorBR) {
         if (hov) dl->AddRectFilled(mn, mx, WithAlpha(fg, 0.08f * ti), itemH * 0.5f);
         const ImVec2 icSz = fontRegular->CalcTextSizeA(18.f, FLT_MAX, 0, q.icon);
         dl->AddText(fontRegular, 18.f, ImVec2(mn.x + 20.f, mn.y + (itemH - icSz.y) * 0.5f), WithAlpha(fg, ti), q.icon);
-        dl->AddText(fontBold, 14.f, ImVec2(mn.x + 48.f, mn.y + (itemH - ts.y) * 0.5f), WithAlpha(fg, ti), q.label);
+        dl->AddText(fontBold, 14.f, ImVec2(mn.x + 48.f, mn.y + (itemH - ts.y) * 0.5f), WithAlpha(fg, ti), L(q.label));
         if (keyName) {  // assigned hotkey as a small badge
             const ImVec2 bMin(mx.x - ks.x - 30.f, mn.y + 13.f), bMax(mx.x - 12.f, mx.y - 13.f);
             dl->AddRectFilled(bMin, bMax, WithAlpha(fg, 0.14f * ti), 8.f);
@@ -621,7 +627,7 @@ void DrawFab(ImVec2 anchorBR) {
     const ImVec2 b1 = fontRegular->CalcTextSizeA(s1, FLT_MAX, 0, icon::Bolt), b2 = fontRegular->CalcTextSizeA(s2, FLT_MAX, 0, icon::Close);
     if (a < 0.99f) dl->AddText(fontRegular, s1, c - b1 * 0.5f, WithAlpha(fg, 1.f - a), icon::Bolt);
     if (a > 0.01f) dl->AddText(fontRegular, s2, c - b2 * 0.5f, WithAlpha(fg, a), icon::Close);
-    if (n == 0 && hov) SetTooltip(u8"Добавьте функции в «Настройки → Быстрый доступ»");
+    if (n == 0 && hov) SetTooltip(L(u8"Добавьте функции в «Настройки → Быстрый доступ»"));
     EndChild();
 }
 
@@ -735,20 +741,20 @@ void Draw() {
     // emphasized headline slides in with every navigation
     const float ht = motion::SpringTo(ImHashData(&g_visit, sizeof(g_visit), GetID("##title")), 1.f, motion::kSpatial, 0.f);
     const float ha = motion::Clamp01(ht);
-    dl->AddText(fontBold, 30.f, paneMin + ImVec2(28.f + (1.f - ht) * -28.f, 14.f), WithAlpha(S.onSurface, ha), pi.title);
-    dl->AddText(fontRegular, kBody, paneMin + ImVec2(29.f + (1.f - ht) * -16.f, 52.f), WithAlpha(S.onSurfaceVariant, ha), pi.subtitle);
+    dl->AddText(fontBold, 30.f, paneMin + ImVec2(28.f + (1.f - ht) * -28.f, 14.f), WithAlpha(S.onSurface, ha), L(pi.title));
+    dl->AddText(fontRegular, kBody, paneMin + ImVec2(29.f + (1.f - ht) * -16.f, 52.f), WithAlpha(S.onSurfaceVariant, ha), L(pi.subtitle));
 
     // status + close in the header
     SetCursorScreenPos(ImVec2(paneMax.x - 196.f, paneMin.y + 26.f));
     if (InGame()) {
-        m3::Badge(u8"●  В игре", S.primaryContainer, S.onPrimaryContainer);
+        m3::Badge(L(u8"●  В игре"), S.primaryContainer, S.onPrimaryContainer);
     } else {
         const ImVec2 p = GetCursorScreenPos();
         motion::LoadingIndicator(dl, p + ImVec2(-18.f, 12.f), 8.f, S.primary);
-        m3::Badge(u8"Ждём уровень", S.surfaceContainerHighest, S.onSurfaceVariant);
+        m3::Badge(L(u8"Ждём уровень"), S.surfaceContainerHighest, S.onSurfaceVariant);
     }
     SetCursorScreenPos(ImVec2(paneMax.x - 60.f, paneMin.y + 18.f));
-    if (m3::IconButton("##close", icon::Close, false, u8"Закрыть (Insert)")) game::g_menuOpen = false;
+    if (m3::IconButton("##close", icon::Close, false, L(u8"Закрыть (Insert)"))) game::g_menuOpen = false;
 
     SetCursorScreenPos(paneMin + ImVec2(16, 86));
     PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 4));

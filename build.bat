@@ -21,7 +21,7 @@ set CFLAGS=/nologo /O2 /MT /EHsc /std:c++20 /utf-8 /Zc:char8_t- /W3 /DNDEBUG /DW
  /I src /I %IMGUI% /I %MH%\include /Fo:obj\ /Fd:obj\
 
 set SOURCES=src\dllmain.cpp src\il2cpp.cpp src\unity.cpp src\game.cpp src\state.cpp src\config.cpp src\log.cpp ^
- src\render.cpp src\theme.cpp src\widgets.cpp src\menu.cpp src\esp.cpp src\motion.cpp src\toggles.cpp src\blur.cpp ^
+ src\render.cpp src\theme.cpp src\widgets.cpp src\menu.cpp src\esp.cpp src\motion.cpp src\toggles.cpp src\blur.cpp src\i18n.cpp ^
  %IMGUI%\imgui.cpp %IMGUI%\imgui_draw.cpp %IMGUI%\imgui_tables.cpp %IMGUI%\imgui_widgets.cpp ^
  %IMGUI%\backends\imgui_impl_dx11.cpp %IMGUI%\backends\imgui_impl_win32.cpp ^
  %MH%\src\buffer.c %MH%\src\hook.c %MH%\src\trampoline.c %MH%\src\hde\hde64.c

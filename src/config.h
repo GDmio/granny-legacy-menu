@@ -95,6 +95,7 @@ struct Settings {
     float seedHue = 265.f;      // Material You seed colour (hue in degrees)
     float seedChroma = 0.55f;
     bool lightTheme = false;
+    int language = -1;          // 0 Russian, 1 English, -1 = pick from the Windows UI language
     int toastStyle = 0;         // 0 = follows the theme, 1 = M3 inverse (contrast) snackbar
     int glassMode = 2;          // 0 none, 1 glass, 2 frosted, 3 acrylic
     float menuTransparency = 0.25f;  // 0 = solid

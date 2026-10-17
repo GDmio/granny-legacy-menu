@@ -1,5 +1,6 @@
 #include "esp.h"
 #include "config.h"
+#include "i18n.h"
 #include "state.h"
 #include "theme.h"
 #include <algorithm>
@@ -161,7 +162,7 @@ void Draw() {
             dl->AddCircleFilled(p, 4.5f, IM_COL32(0, 0, 0, static_cast<int>(150 * a)), 16);
             dl->AddCircleFilled(p, 3.f, Col(g_cfg.itemColor, a), 16);
             char buf[128];
-            if (g_cfg.itemDistance) std::snprintf(buf, sizeof(buf), u8"%s · %.0f м", it.name.c_str(), it.dist);
+            if (g_cfg.itemDistance) std::snprintf(buf, sizeof(buf), L(u8"%s · %.0f м"), it.name.c_str(), it.dist);
             else std::snprintf(buf, sizeof(buf), "%s", it.name.c_str());
             SmallText(dl, p + ImVec2(0, 6), buf, WithAlpha(col, a));
         }
@@ -198,7 +199,7 @@ void Draw() {
             if (!onScreen) {
                 if (g_cfg.enemyOffscreen) {
                     char lbl[64];
-                    std::snprintf(lbl, sizeof(lbl), u8"%s %.0fм", e.name.c_str(), e.dist);
+                    std::snprintf(lbl, sizeof(lbl), L(u8"%s %.0fм"), e.name.c_str(), e.dist);
                     OffscreenArrow(dl, pr, e.pos, col, lbl);
                 }
                 continue;
@@ -220,7 +221,7 @@ void Draw() {
             float y = mx.y + 2.f;
             if (g_cfg.enemyDistance) {
                 char buf[32];
-                std::snprintf(buf, sizeof(buf), u8"%.0f м", e.dist);
+                std::snprintf(buf, sizeof(buf), L(u8"%.0f м"), e.dist);
                 SmallText(dl, ImVec2((mn.x + mx.x) * 0.5f, y), buf, S.onSurface);
                 y += 16.f;
             }

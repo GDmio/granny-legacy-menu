@@ -1,5 +1,6 @@
 #include "game.h"
 #include "config.h"
+#include "i18n.h"
 #include "log.h"
 #include "state.h"
 #include "unity.h"
@@ -621,9 +622,9 @@ void RefreshGiveList() {
         if (!e.itemName.empty()) out.push_back(std::move(e));
     }
     const std::pair<int, const char*> specials[] = {
-        { off::PickRay_H_CR, u8"Арбалет" }, { off::PickRay_H_DSH, u8"Двустволка" }, { off::PickRay_H_SG, u8"Дробовик" },
-        { off::PickRay_H_SPRAY, u8"Перцовый баллончик" }, { off::PickRay_H_BATON, u8"Электрошокер" },
-        { off::PickRay_H_FT, u8"Ледяная ловушка" }, { off::PickRay_H_PTRAP, u8"Ядовитая ловушка" },
+        { off::PickRay_H_CR, L(u8"Арбалет") }, { off::PickRay_H_DSH, L(u8"Двустволка") }, { off::PickRay_H_SG, L(u8"Дробовик") },
+        { off::PickRay_H_SPRAY, L(u8"Перцовый баллончик") }, { off::PickRay_H_BATON, L(u8"Электрошокер") },
+        { off::PickRay_H_FT, L(u8"Ледяная ловушка") }, { off::PickRay_H_PTRAP, L(u8"Ядовитая ловушка") },
     };
     for (const auto& [fieldOff, label] : specials)
         if (void* hand = PickRayObj(fieldOff)) hands.try_emplace(hand, label);
@@ -913,18 +914,18 @@ void CameraAim() {
 }
 
 std::string EnemyState(const Tracked& t) {
-    if (t.frozen) return u8"Заморожен";
+    if (t.frozen) return L(u8"Заморожен");
     const EnemyType& et = g_types[t.type];
     auto flag = [&](int o) { return o >= 0 && FieldAt<bool>(t.comp, o); };
-    if (flag(et.offDying)) return u8"Без сознания";
-    if (flag(et.offChasing)) return u8"Погоня";
-    if (flag(et.offTargeting)) return u8"Охотится";
-    if (flag(et.offLunging)) return u8"Бросок";
-    if (flag(et.offAngry)) return u8"Злится";
-    if (flag(et.offSearching)) return u8"Ищет";
-    if (flag(et.offEating)) return u8"Ест";
-    if (flag(et.offHit)) return u8"Оглушён";
-    if (flag(et.offIdle)) return u8"Стоит";
+    if (flag(et.offDying)) return L(u8"Без сознания");
+    if (flag(et.offChasing)) return L(u8"Погоня");
+    if (flag(et.offTargeting)) return L(u8"Охотится");
+    if (flag(et.offLunging)) return L(u8"Бросок");
+    if (flag(et.offAngry)) return L(u8"Злится");
+    if (flag(et.offSearching)) return L(u8"Ищет");
+    if (flag(et.offEating)) return L(u8"Ест");
+    if (flag(et.offHit)) return L(u8"Оглушён");
+    if (flag(et.offIdle)) return L(u8"Стоит");
     return {};
 }
 
@@ -946,7 +947,7 @@ void BuildSnapshot() {
         if (!il2cpp::Alive(t.comp) || !unity::GO_ActiveInHierarchy(t.go)) continue;
         EnemyView v;
         v.id = reinterpret_cast<uintptr_t>(t.comp);
-        v.name = t.name;
+        v.name = L(t.name.c_str());
         v.pos = unity::GetPosition(t.transform);
         v.hasBounds = EnemyBounds(t, v.bmin, v.bmax);
         v.dist = Length(v.pos - s.playerPos);
@@ -977,10 +978,10 @@ void BuildSnapshot() {
         s.shotgunLoaded = FieldAt<bool>(g_pickRay, off::PickRay_LoadedGun);
         s.crossbowCharged = FieldAt<bool>(g_pickRay, off::PickRay_IsCharged);
         s.spray = FieldAt<float>(g_pickRay, off::PickRay_SprayLeft);
-        if (HandActive(off::PickRay_H_CR)) s.heldItem = u8"Арбалет";
-        else if (HandActive(off::PickRay_H_DSH)) s.heldItem = u8"Двустволка";
-        else if (HandActive(off::PickRay_H_FT)) s.heldItem = u8"Ледяная ловушка";
-        else if (HandActive(off::PickRay_H_PTRAP)) s.heldItem = u8"Ядовитая ловушка";
+        if (HandActive(off::PickRay_H_CR)) s.heldItem = L(u8"Арбалет");
+        else if (HandActive(off::PickRay_H_DSH)) s.heldItem = L(u8"Двустволка");
+        else if (HandActive(off::PickRay_H_FT)) s.heldItem = L(u8"Ледяная ловушка");
+        else if (HandActive(off::PickRay_H_PTRAP)) s.heldItem = L(u8"Ядовитая ловушка");
         else {
             void* inv = PickRayObj(off::PickRay_Inventory);
             void* list = il2cpp::Alive(inv) ? FieldAt<void*>(inv, off::Inventory_ItemDefs) : nullptr;
@@ -1174,7 +1175,7 @@ void AutoUseFinish() {
         unity::GO_SetActive(PickRayObj(off::PickRay_Drop1), false);
     }
     auto it = g_hands.find(g_auto.required);
-    state::Notify(std::string(u8"Автоприменение: ") + (it != g_hands.end() ? it->second : std::string("?")));
+    state::Notify(std::string(L(u8"Автоприменение: ")) + (it != g_hands.end() ? it->second : std::string("?")));
     g_auto = {};
 }
 
@@ -1314,7 +1315,7 @@ template <int N> struct DeathHook {
         if (g_cfg.godmode && !g_cleanupRequested) {
             const uint64_t now = state::NowMs();
             if (now - g_lastGodToast > 3000) {
-                state::Notify(u8"Бессмертие: смерть отменена");
+                state::Notify(L(u8"Бессмертие: смерть отменена"));
                 g_lastGodToast = now;
             }
             return;
@@ -1415,7 +1416,7 @@ template <int N> void HookDeath(const char* method) {
 // ---------------------------------------------------------------------------
 bool PickRayReady() {
     if (il2cpp::Alive(g_pickRay) && m.CheckItemDropping) return true;
-    state::Notify(u8"Сначала загрузитесь в игру");
+    state::Notify(L(u8"Сначала загрузитесь в игру"));
     return false;
 }
 
@@ -1436,20 +1437,20 @@ void DoGiveItem(const std::string& itemName) {
         FieldAt<bool>(g_pickRay, off::PickRay_LoadedGun) = true;
     }
     FinishPickup();
-    state::Notify(u8"Выдано: " + ItemLabel(itemName));
+    state::Notify(L(u8"Выдано: ") + ItemLabel(itemName));
 }
 
 void DoGiveHand(int handOff, const char* label) {
     if (!PickRayReady()) return;
     void* hand = PickRayObj(handOff);
     if (!il2cpp::Alive(hand)) {
-        state::Notify(u8"Этого предмета нет в текущем режиме");
+        state::Notify(L(u8"Этого предмета нет в текущем режиме"));
         return;
     }
     m.CheckItemDropping(g_pickRay, nullptr);
     unity::GO_SetActive(hand, true);
     FinishPickup();
-    state::Notify(std::string(u8"Выдано: ") + label);
+    state::Notify(std::string(L(u8"Выдано: ")) + label);
 }
 
 std::string ItemNameByHand(int handOff) {
@@ -1471,11 +1472,11 @@ void DoGiveSpecial(Special which) {
     if (!PickRayReady()) return;
     switch (which) {
     case Special::Crossbow:
-        DoGiveHand(off::PickRay_H_CR, u8"Арбалет");
+        DoGiveHand(off::PickRay_H_CR, L(u8"Арбалет"));
         FieldAt<bool>(g_pickRay, off::PickRay_IsCharged) = true;
         break;
     case Special::DoubleShotgun:
-        DoGiveHand(off::PickRay_H_DSH, u8"Двустволка");
+        DoGiveHand(off::PickRay_H_DSH, L(u8"Двустволка"));
         FieldAt<float>(g_pickRay, off::PickRay_AmmoAmount) = 2.f;
         break;
     case Special::Shotgun: {
@@ -1486,7 +1487,7 @@ void DoGiveSpecial(Special which) {
     }
     case Special::PepperSpray: {
         std::string n = ItemNameByHand(off::PickRay_H_SPRAY);
-        if (n.empty()) DoGiveHand(off::PickRay_H_SPRAY, u8"Перцовый баллончик");
+        if (n.empty()) DoGiveHand(off::PickRay_H_SPRAY, L(u8"Перцовый баллончик"));
         else DoGiveItem(n);
         float& spray = FieldAt<float>(g_pickRay, off::PickRay_SprayLeft);
         if (spray < 3.f) spray = 3.f;
@@ -1495,11 +1496,11 @@ void DoGiveSpecial(Special which) {
     case Special::Baton:
         if (m.PickBaton) {
             m.PickBaton(g_pickRay, nullptr);
-            state::Notify(u8"Выдано: Электрошокер");
+            state::Notify(L(u8"Выдано: Электрошокер"));
         }
         break;
-    case Special::FreezeTrap: DoGiveHand(off::PickRay_H_FT, u8"Ледяная ловушка"); break;
-    case Special::PoisonTrap: DoGiveHand(off::PickRay_H_PTRAP, u8"Ядовитая ловушка"); break;
+    case Special::FreezeTrap: DoGiveHand(off::PickRay_H_FT, L(u8"Ледяная ловушка")); break;
+    case Special::PoisonTrap: DoGiveHand(off::PickRay_H_PTRAP, L(u8"Ядовитая ловушка")); break;
     }
 }
 
@@ -1527,7 +1528,7 @@ void DoEnemy(uintptr_t id, EnemyAction action) {
     case EnemyAction::TeleportToMe: MoveEnemy(*t, PlayerPos() + CameraForwardFlat() * 3.f); break;
     case EnemyAction::TeleportToPoint:
         if (g_hasSaved) MoveEnemy(*t, g_savedPoint);
-        else state::Notify(u8"Сначала сохраните точку во вкладке «Игрок»");
+        else state::Notify(L(u8"Сначала сохраните точку во вкладке «Игрок»"));
         break;
     case EnemyAction::ToggleFreeze: t->freezeSingle = !t->freezeSingle; break;
     case EnemyAction::Kill: {
@@ -1687,7 +1688,7 @@ void StopAllChases() {
     state::Post([] {
         for (auto& [k, t] : g_enemies)
             if (il2cpp::Alive(t.comp)) CallMI(g_types[t.type].miStopChase, t.comp);
-        state::Notify(u8"Погоня сброшена");
+        state::Notify(L(u8"Погоня сброшена"));
     });
 }
 
@@ -1696,7 +1697,7 @@ void SavePoint() {
         if (!il2cpp::Alive(g_player)) return;
         g_savedPoint = PlayerPos();
         g_hasSaved = true;
-        state::Notify(u8"Точка сохранена");
+        state::Notify(L(u8"Точка сохранена"));
     });
 }
 
