@@ -234,7 +234,13 @@ void* g_pickRayUpdate = nullptr;    // start of PickRay.Update, to recognise dir
 bool g_clickArmed = false;          // the interact click was registered during this PickRay.Update
 void* g_lastMissingHand = nullptr;  // last hand object PickRay.Update asked about that was not held
 void* g_requiredHand = nullptr;     // hand the game complained about ("I need ...")
-struct AutoUse { void* required = nullptr; void* previous = nullptr; bool running = false; uint64_t startMs = 0; } g_auto;
+struct AutoUse {
+    void* required = nullptr;
+    void* previous = nullptr;
+    bool running = false;
+    uint64_t startMs = 0;
+    uint64_t clickedMs = 0;  // when the game consumed the replayed click (0 = not yet)
+} g_auto;
 std::vector<std::pair<int, std::string>> g_handFields;  // every PickRay.H_* field (offset, name)
 
 // ---------------------------------------------------------------------------
@@ -1269,8 +1275,16 @@ void hkPickRay_Update(void* self, MI mi) {
     if (autoUseFrame) {
         // Some locks ignore clicks while their "locked" sound still plays: keep the click pending until the
         // game consumes it (buttonClicked reset) or give up after 3 s
-        const bool consumed = !FieldAt<bool>(self, off::PickRay_buttonClicked);
-        if (consumed || state::NowMs() - g_auto.startMs > 3000) AutoUseFinish();
+        // 1) keep the click pending until the game consumes it (some locks ignore clicks while a sound plays);
+        // 2) then keep the item in hand while the unlock action plays (doors, safe, hatch use the key
+        //    after the click) until the game takes it away itself, at most 3 s
+        const uint64_t now = state::NowMs();
+        if (!g_auto.clickedMs) {
+            if (!FieldAt<bool>(self, off::PickRay_buttonClicked)) g_auto.clickedMs = now;
+            else if (now - g_auto.startMs > 3000) AutoUseFinish();
+        } else if (!unity::GO_ActiveSelf(g_auto.required) || now - g_auto.clickedMs > 3000) {
+            AutoUseFinish();
+        }
     } else if (g_requiredHand && g_cfg.autoUse && !g_cleanupRequested) {
         AutoUseBegin(g_requiredHand);
     }
