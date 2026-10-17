@@ -1,65 +1,67 @@
 # Granny Legacy Menu
 
-Внутриигровое меню-тренер для **Granny Legacy** (Unity 2022.3, IL2CPP, DirectX 11) с интерфейсом в стиле **Material 3 Expressive**: пружинные анимации, морфинг форм, стеклянный фон с настоящим размытием.
+**English** | [Русский](README.ru.md)
+
+An in-game trainer menu for **Granny Legacy** (Unity 2022.3, IL2CPP, DirectX 11) with a **Material 3 Expressive** interface: spring animations, shape morphing and glass surfaces with real GPU blur. The interface is available in **English and Russian**.
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6)
 ![Unity](https://img.shields.io/badge/Unity-2022.3%20IL2CPP-black)
 ![Graphics](https://img.shields.io/badge/D3D11-ImGui-6f42c1)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**English:** an in-game trainer for Granny Legacy with a Material 3 Expressive UI — ESP, chams, radar, aimbot / silent aim, godmode, invisibility, noclip, item and weapon spawning, auto-use of keys, enemy AI control and GPU-blurred glass surfaces. The interface is available in **English and Russian** (Settings → Language). Build with `build.bat`, run `inject.bat`, press **Insert** in game.
+> **Single-player only.** This project is not affiliated with DVloper or the game's publishers. The repository contains no game files, assets, dumps or decompiled code — only the mod's own code, which finds the game's classes by name at runtime. Use at your own risk.
 
-> **Только для одиночной игры.** Проект не связан с DVloper и издателями игры. В репозитории нет файлов игры, ассетов, дампов или декомпилированного кода — только собственный код мода, который во время работы находит нужные классы игры по их именам. Используйте на свой риск.
-
----
-
-## Возможности
-
-### Визуал
-- **ESP врагов** — рамка (полная / уголки), имя, дистанция, состояние ИИ (погоня, поиск, заморозка…), линии, стрелки на врагов за пределами экрана.
-- **ESP предметов** — подписи и дистанция, фильтр по названию, ограничение дальности.
-- **Chams** для врагов и предметов: контур / силуэт / оба (через встроенный в игру `Outline`) и материалы — заливка, двухцветный (виден / за стеной), «сквозь стены», призрак, свечение, неон (bloom), хром. Модификаторы «радуга» и «пульсация». Occlusion culling отключается, чтобы подсветка не пропадала за стенами.
-- **Мини-радар.**
-
-### Игрок
-- **Бессмертие** — враги не могут начать поимку (Granny, Grandpa, мама-паук), удары и ловушки отменяются, зависшие состояния автоматически сбрасываются.
-- **Невидимость** — Granny, Grandpa и мама-паук не видят игрока.
-- **Speedhack**, **noclip** (полёт сквозь стены), свой **FOV**, сохранение точки и телепорт.
-
-### Оружие
-- Выдача **арбалета, двустволки, дробовика, перцового баллончика, электрошокера, ловушек**.
-- **Бесконечные патроны**, **rapid fire**, заряженные дротики.
-- **Aimbot**: плавная наводка камеры по клавише и **silent aim** (пули и дротики летят в цель без поворота камеры), выбор точки (голова / грудь / центр), угол захвата, круг FOV.
-
-### Предметы
-- Выдача **любого предмета** игры — список берётся прямо из инвентаря игры.
-- **Автоприменение** — если замок требует ключ или инструмент, которого нет в руке, мод сам применяет нужный предмет и возвращает в руку прежний.
-- Список предметов на карте: **телепорт к предмету** или **притянуть к себе**.
-
-### Враги
-- Заморозка всех или по отдельности, множитель скорости.
-- Для каждого врага: нокаут, перец, лёд, погоня / стоп, телепорт к себе или на точку, «убить» (Granny / Grandpa).
-
-### Мир
-- Яркий мир (fullbright), без тумана, скорость игры.
-
-### Интерфейс
-- **Material You**: палитра строится из одного цвета (OKLCH), светлая и тёмная темы с плавным переходом.
-- **Material 3 Expressive motion**: пружины с перелётом, перетекающий индикатор навигации, ripple, «сжатие» кнопок при нажатии, squash & stretch переключателей, поочерёдный въезд карточек, морфинг-индикатор загрузки, волнистый прогресс в уведомлениях.
-- **Материал окна**: нет / стекло / матовое / акрил — размытие фона считается на GPU, настраиваются прозрачность и сила размытия.
-- **Быстрый доступ (FAB)** — кнопка с выбранными функциями, **горячие клавиши для любой функции**.
-- **Русский и английский язык** интерфейса (при первом запуске выбирается по языку Windows, меняется в «Настройки → Язык»).
-- Сохранение и загрузка конфига (`granny_menu.ini`).
+**[Download the latest release](https://github.com/GDmio/granny-legacy-menu/releases/latest)**
 
 ---
 
-## Требования
+## Features
+
+### Visuals
+- **Enemy ESP** — box (full / corners), name, distance, AI state (chasing, searching, frozen…), snaplines, arrows pointing to off-screen enemies.
+- **Item ESP** — labels and distance, name filter, range limit.
+- **Chams** for enemies and items: outline / silhouette / both (using the game's own `Outline` component) and materials — flat, two-tone (visible / behind walls), behind-walls only, ghost, glow, neon (bloom), chrome. Rainbow and pulse modifiers. Occlusion culling is disabled so highlights don't vanish behind walls.
+- **Mini radar.**
+
+### Player
+- **Godmode** — enemies can't start a catch (Granny, Grandpa, Mother Spider), hits and traps are cancelled, stuck states are reset automatically.
+- **Invisibility** — Granny, Grandpa and the Mother Spider can't see the player.
+- **Speedhack**, **noclip** (fly through walls), custom **FOV**, save point and teleport.
+
+### Weapons
+- Spawn the **crossbow, double-barrel shotgun, shotgun, pepper spray, stun baton and traps**.
+- **Infinite ammo**, **rapid fire**, charged darts.
+- **Aimbot**: smooth camera aim on a key and **silent aim** (shots and darts hit the target without turning the camera), aim point (head / chest / centre), aim FOV, FOV circle.
+
+### Items
+- Spawn **any item** in the game — the list comes straight from the game's inventory.
+- **Auto-use** — if a lock needs a key or tool you're not holding, the mod uses the right item for you and gives your previous item back.
+- List of items on the map: **teleport to an item** or **pull it to you**.
+
+### Enemies
+- Freeze everyone or one at a time, speed multiplier.
+- Per enemy: knock out, pepper, ice, chase / stop, teleport to you or to a saved point, "kill" (Granny / Grandpa).
+
+### World
+- Fullbright, no fog, game speed.
+
+### Interface
+- **Material You**: the palette is generated from a single colour (OKLCH), light and dark themes with a smooth transition.
+- **Material 3 Expressive motion**: overshooting springs, a gliding navigation indicator, ripples, buttons that squish when pressed, squash & stretch switches, staggered card entrances, a morphing loading indicator, wavy progress in notifications.
+- **Window material**: none / glass / frosted / acrylic — the background blur is computed on the GPU; transparency and blur strength are adjustable.
+- **Quick access (FAB)** — a button with your chosen features, plus **hotkeys for any feature**.
+- **English and Russian** interface (picked from the Windows language on first start, switchable in Settings → Language).
+- Config save / load (`granny_menu.ini`).
+
+---
+
+## Requirements
 
 - Windows 10 / 11 x64
-- Granny Legacy (Steam-версия)
-- Для сборки: **Visual Studio 2022 или новее** с компонентом «Разработка классических приложений на C++»
+- Granny Legacy (Steam version)
+- To build: **Visual Studio 2022 or newer** with the "Desktop development with C++" workload
 
-## Сборка
+## Building
 
 ```bash
 git clone --recursive https://github.com/GDmio/granny-legacy-menu.git
@@ -67,71 +69,72 @@ cd granny-legacy-menu
 build.bat
 ```
 
-Если репозиторий склонирован без `--recursive`:
+If you cloned without `--recursive`:
 
 ```bash
 git submodule update --init
 ```
 
-Результат: `bin\GrannyLegacyMenu.dll` и `bin\injector.exe`.
+Output: `bin\GrannyLegacyMenu.dll` and `bin\injector.exe`.
 
-## Запуск
+## Running
 
-1. Запустите игру.
-2. Запустите `inject.bat` (можно и до запуска игры — он дождётся её процесса).
-3. В игре: **Insert** — меню, **End** — выгрузить мод.
+1. Start the game.
+2. Run `inject.bat` (it can also be started before the game — it waits for the game process).
+3. In game: **Insert** — menu, **End** — unload the mod.
 
-`inject.bat` внедряет копию DLL из `bin\loaded\`, поэтому мод можно пересобирать, не закрывая игру: повторный запуск `inject.bat` сам выгрузит старую версию и подключит новую.
+`inject.bat` injects a copy of the DLL from `bin\loaded\`, so you can rebuild without closing the game: running `inject.bat` again unloads the old version and loads the new one.
 
-## Горячие клавиши
+## Hotkeys
 
-| Клавиша | Действие |
+| Key | Action |
 |---|---|
-| Insert | открыть / закрыть меню |
-| End | выгрузить мод |
-| ПКМ (по умолчанию) | наводка камеры aimbot |
-| любые | переключение функций — назначаются в «Настройки → Быстрый доступ» |
+| Insert | open / close the menu |
+| End | unload the mod |
+| Right mouse button (default) | aimbot camera aim |
+| any | toggle features — assign them in Settings → Quick access |
 
 ---
 
-## Как это устроено
+## How it works
 
-- **Без жёстко прописанных адресов.** Все классы, поля и методы игры ищутся во время работы по именам через экспорты `il2cpp_*` (`il2cpp_class_from_name`, `il2cpp_class_get_method_from_name`, `il2cpp_field_get_offset`, `il2cpp_resolve_icall`…). Вырезанные стриппингом методы Unity вызываются напрямую через icall'ы из `UnityPlayer.dll`.
-- **Хуки** — MinHook на методы игры (`MobileFPS.Update`, `PickRay.Update`, `AI_Granny.SensorPlayer`, `PlayerStatus.*Death`…) и на `IDXGISwapChain::Present` / `ResizeBuffers`.
-- **Потоки.** Вся работа с Unity идёт в главном потоке игры (внутри `MobileFPS.Update`); рендер-поток только рисует снимок данных и отправляет команды в очередь.
-- **Интерфейс** — Dear ImGui с собственными виджетами Material 3 (`widgets.cpp`), пружинной физикой и фигурами (`motion.cpp`), генерацией палитры (`theme.cpp`) и размытием на D3D11-шейдерах (`blur.cpp`).
+- **No hard-coded addresses.** Every game class, field and method is looked up by name at runtime through the `il2cpp_*` exports (`il2cpp_class_from_name`, `il2cpp_class_get_method_from_name`, `il2cpp_field_get_offset`, `il2cpp_resolve_icall`…). Unity methods removed by code stripping are called directly through icalls in `UnityPlayer.dll`.
+- **Hooks** — MinHook on game methods (`MobileFPS.Update`, `PickRay.Update`, `AI_Granny.SensorPlayer`, `PlayerStatus.*Death`…) and on `IDXGISwapChain::Present` / `ResizeBuffers`.
+- **Threads.** All Unity work runs on the game's main thread (inside `MobileFPS.Update`); the render thread only draws a data snapshot and queues commands.
+- **Interface** — Dear ImGui with custom Material 3 widgets (`widgets.cpp`), spring physics and shapes (`motion.cpp`), palette generation (`theme.cpp`), D3D11 shader blur (`blur.cpp`) and translations (`i18n.cpp`).
 
 ```
 src/
-  dllmain.cpp     точка входа, горячая перезагрузка, выгрузка
-  il2cpp.*        доступ к IL2CPP API
-  unity.*         обёртки над методами Unity
-  game.*          хуки и все игровые функции
-  state.*         снимок данных и очередь команд между потоками
-  render.*        D3D11 / ImGui / WndProc, горячие клавиши
-  menu.*          страницы меню, FAB, уведомления
-  widgets.*       виджеты Material 3
-  motion.*        пружины, ripple, морфинг фигур
-  theme.*         палитра Material You и шрифты
-  blur.*          GPU-размытие для стеклянных эффектов
-  esp.*           ESP, радар, круг FOV
-  toggles.*       реестр функций для быстрого доступа и хоткеев
-  config.*        сохранение настроек
-injector/         простой инжектор LoadLibrary
+  dllmain.cpp     entry point, hot reload, unloading
+  il2cpp.*        IL2CPP API access
+  unity.*         Unity method wrappers
+  game.*          hooks and every game feature
+  state.*         data snapshot and command queue between threads
+  render.*        D3D11 / ImGui / WndProc, hotkeys
+  menu.*          menu pages, FAB, notifications
+  widgets.*       Material 3 widgets
+  motion.*        springs, ripples, shape morphing
+  theme.*         Material You palette and fonts
+  blur.*          GPU blur for the glass effects
+  esp.*           ESP, radar, FOV circle
+  toggles.*       feature registry for quick access and hotkeys
+  i18n.*          English / Russian translations
+  config.*        settings persistence
+injector/         simple LoadLibrary injector
 third_party/      Dear ImGui, MinHook (git submodules)
 ```
 
-## Если что-то не работает
+## Troubleshooting
 
-Мод пишет лог в `bin\granny_menu.log` — там видно, какие классы, поля и хуки найдены. После обновления игры имена могут измениться: строки `not found` в логе подскажут, что именно.
+The mod writes a log to `bin\granny_menu.log` showing which classes, fields and hooks were found. After a game update names may change: `not found` lines in the log tell you exactly what.
 
-## Благодарности
+## Credits
 
 - [Dear ImGui](https://github.com/ocornut/imgui) — MIT
 - [MinHook](https://github.com/TsudaKageyu/minhook) — BSD 2-Clause
-- [Il2CppDumper](https://github.com/Perfare/Il2CppDumper) — использовался при исследовании игры
-- [Material Design 3](https://m3.material.io/) — дизайн-система
+- [Il2CppDumper](https://github.com/Perfare/Il2CppDumper) — used while researching the game
+- [Material Design 3](https://m3.material.io/) — design system
 
-## Лицензия
+## License
 
 [MIT](LICENSE)
