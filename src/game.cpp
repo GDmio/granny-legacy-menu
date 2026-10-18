@@ -28,14 +28,14 @@ constexpr const char* kAsm = "Assembly-CSharp.dll";
 // ---------------------------------------------------------------------------
 #define GAME_CLASSES(X) \
     X(MobileFPS) X(PickRay) X(Inventory) X(ItemDefs) X(ItemSeedData) X(PlayerStatus) X(EnemyController) \
-    X(Eyes_Granny) X(Eyes_Grandpa) X(Eyes_MomSpider) X(AI_Granny) X(AI_Grandpa) X(AI_MomSpider) X(HandlePuzzles) X(AnimatedStuff) X(StealDoorHit) X(PrisonCaptureTrigger) X(FallingHolder) X(Outline) X(Paused)
+    X(Eyes_Granny) X(Eyes_Grandpa) X(Eyes_MomSpider) X(AI_Granny) X(AI_Grandpa) X(AI_MomSpider) X(HandlePuzzles) X(AnimatedStuff) X(StealDoorHit) X(PrisonCaptureTrigger) X(AtticDoorManage) X(BackdoorManage) X(Sauna) X(FallingHolder) X(Outline) X(Paused)
 
 #define GAME_FIELDS(X) \
     X(MobileFPS, playerCamera) X(MobileFPS, characterController) X(MobileFPS, playerCamera2) X(MobileFPS, PS) \
     X(PickRay, Drop1) X(PickRay, Ring) X(PickRay, IsCharged) X(PickRay, LoadedGun) X(PickRay, AmmoAmount) \
     X(PickRay, SprayLeft) X(PickRay, DartHasEnergy) X(PickRay, H_SG) X(PickRay, H_DSH) X(PickRay, H_CR) \
     X(PickRay, H_SPRAY) X(PickRay, H_FT) X(PickRay, H_PTRAP) X(PickRay, H_BATON) X(PickRay, Inventory) X(PickRay, ShootKey) \
-    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) X(PickRay, HP) X(PrisonCaptureTrigger, Locked) \
+    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) X(PickRay, HP) X(PrisonCaptureTrigger, Locked) X(AtticDoorManage, LockedD) X(BackdoorManage, LockedD) \
     X(Inventory, ItemDefs) X(ItemDefs, itemName) X(ItemDefs, handObject) X(ItemDefs, textHighlighted) \
     X(ItemSeedData, itemName) X(PlayerStatus, EC) \
     X(Eyes_Granny, AI) X(Eyes_Grandpa, AI) X(Eyes_MomSpider, ViewRange) X(AI_Granny, IsBlind) X(AI_Grandpa, IsBlind) \
@@ -140,11 +140,15 @@ const void* g_lockMI[std::size(kLocks)] = {};
 
 // Doors: AnimatedStuff (doors, drawers, cupboards — also enemy-only doors), the steel door opened by
 // a gunshot (StealDoorHit) and the cage on the third floor (PrisonCaptureTrigger)
-enum class DoorKind { Animated, Steel, Cage };
+// Enemy-only doors: the attic door (third floor) and the back door outside are opened by Granny
+// through AtticDoorManage / BackdoorManage.OpenDoor; LockedD is what keeps the player out.
+enum class DoorKind { Animated, Steel, Cage, Attic, Back, Sauna };
 struct DoorType { void** klass; DoorKind kind; void* type = nullptr; };
 DoorType g_doorTypes[] = { { &cls::AnimatedStuff, DoorKind::Animated }, { &cls::StealDoorHit, DoorKind::Steel },
-                           { &cls::PrisonCaptureTrigger, DoorKind::Cage } };
+                           { &cls::PrisonCaptureTrigger, DoorKind::Cage }, { &cls::AtticDoorManage, DoorKind::Attic },
+                           { &cls::BackdoorManage, DoorKind::Back }, { &cls::Sauna, DoorKind::Sauna } };
 const void *g_miDoorOpen = nullptr, *g_miDoorClose = nullptr, *g_miSteelOpen = nullptr, *g_miCageOpen = nullptr;
+const void *g_miAtticOpen = nullptr, *g_miBackOpen = nullptr, *g_miSaunaOpen = nullptr;
 struct DoorRec { void* comp; uint32_t handle; DoorKind kind; void* transform; std::string name; };
 std::vector<DoorRec> g_doors;
 std::unordered_map<void*, bool> g_doorOpen;  // our own open/closed bookkeeping
@@ -995,6 +999,15 @@ void DoorSet(const DoorRec& d, bool open) {
     case DoorKind::Steel:
         if (open) CallMI(g_miSteelOpen, d.comp);
         break;
+    case DoorKind::Attic:
+    case DoorKind::Back: {
+        // unlock for the player too, then run the same OpenDoor the enemies use (it toggles the door)
+        const int lockedOff = d.kind == DoorKind::Attic ? off::AtticDoorManage_LockedD : off::BackdoorManage_LockedD;
+        if (lockedOff >= 0) FieldAt<bool>(d.comp, lockedOff) = false;
+        CallMI(d.kind == DoorKind::Attic ? g_miAtticOpen : g_miBackOpen, d.comp);
+        break;
+    }
+    case DoorKind::Sauna: CallMI(g_miSaunaOpen, d.comp); break;
     case DoorKind::Cage:
         if (open) {
             if (off::PrisonCaptureTrigger_Locked >= 0) FieldAt<bool>(d.comp, off::PrisonCaptureTrigger_Locked) = false;
@@ -1704,6 +1717,9 @@ bool Init() {
     g_miDoorClose = il2cpp::GetMethodInfo(cls::AnimatedStuff, "CloseAction", 0);
     g_miSteelOpen = il2cpp::GetMethodInfo(cls::StealDoorHit, "OpenIt", 0);
     g_miCageOpen = il2cpp::GetMethodInfo(cls::PrisonCaptureTrigger, "AttemptOpen", 0);
+    g_miAtticOpen = il2cpp::GetMethodInfo(cls::AtticDoorManage, "OpenDoor", 0);
+    g_miBackOpen = il2cpp::GetMethodInfo(cls::BackdoorManage, "OpenDoor", 0);
+    g_miSaunaOpen = il2cpp::GetMethodInfo(cls::Sauna, "OpenDoor", 0);
 
     il2cpp::ForEachField(cls::PickRay, [](const char* name, int offset, void*) {
         if (name && name[0] == 'H' && name[1] == '_') g_handFields.emplace_back(offset, name);
