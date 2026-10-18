@@ -44,6 +44,8 @@ An in-game trainer menu for **Granny Legacy** (Unity 2022.3, IL2CPP, DirectX 11)
 
 ### World
 - Fullbright, no fog, game speed.
+- **Doors** — open any door, including the ones only enemies can open (the back door outside, the attic door), the steel door that normally needs a gunshot and the third-floor cage: the door you're looking at (with a hotkey), nearby doors one by one, or all at once.
+- **Locks** — open any lock without its item (master-key door, padlocks, safe, cellar hatch, iron doors, garage…).
 
 ### Interface
 - **Material You**: the palette is generated from a single colour (OKLCH), light and dark themes with a smooth transition.
