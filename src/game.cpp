@@ -1175,7 +1175,11 @@ void AutoUseFinish() {
     const bool consumed = !unity::GO_ActiveSelf(g_auto.required);
     if (!consumed) unity::GO_SetActive(g_auto.required, false);
     FieldAt<bool>(g_pickRay, off::PickRay_buttonClicked) = false;
-    if (il2cpp::Alive(g_auto.previous)) {
+    // the player may have picked something up meanwhile: never put a second item in hand
+    void* nowHeld = HeldHand(g_auto.required);
+    if (nowHeld && nowHeld != g_auto.previous) {
+        unity::GO_SetActive(PickRayObj(off::PickRay_Drop1), true);
+    } else if (il2cpp::Alive(g_auto.previous)) {
         unity::GO_SetActive(g_auto.previous, true);
         unity::GO_SetActive(PickRayObj(off::PickRay_Drop1), true);
     } else {
@@ -1283,7 +1287,7 @@ void hkPickRay_Update(void* self, MI mi) {
         if (!g_auto.clickedMs) {
             if (!FieldAt<bool>(self, off::PickRay_buttonClicked)) g_auto.clickedMs = now;
             else if (now - g_auto.startMs > 3000) AutoUseFinish();
-        } else if (!unity::GO_ActiveSelf(g_auto.required) || now - g_auto.clickedMs > 1000) {
+        } else if (!unity::GO_ActiveSelf(g_auto.required) || now - g_auto.clickedMs > 100) {
             AutoUseFinish();
         }
     } else if (g_requiredHand && g_cfg.autoUse && !g_cleanupRequested) {
