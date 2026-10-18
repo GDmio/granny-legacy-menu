@@ -80,6 +80,10 @@ Fn<bool (*)(void*, Vec3, MI)> fAgentWarp;
 Fn<void (*)(void*, bool, MI)> fAgentSetStopped;
 Fn<bool (*)(void*, MI)> fAgentGetStopped;
 
+void* klassAudio = nullptr;
+void* typeAudio = nullptr;
+Fn<void (*)(void*, bool, MI)> fAudioStop;
+
 const void* miMaterialCtor = nullptr;
 
 } // namespace
@@ -104,6 +108,8 @@ bool Init() {
     void* cAgent = GetClass("UnityEngine.AIModule.dll", "UnityEngine.AI", "NavMeshAgent");
     klassRenderer = GetClass(core, "UnityEngine", "Renderer");
     klassMaterial = GetClass(core, "UnityEngine", "Material");
+    klassAudio = GetClass("UnityEngine.AudioModule.dll", "UnityEngine", "AudioSource");
+    fAudioStop.Set(GetMethod(klassAudio, "Stop", 1, { "System.Boolean" }));
 
     fDestroy.Set(GetMethod(cObject, "Destroy", 1));
     fGetName.Set(GetMethod(cObject, "get_name", 0));
@@ -197,6 +203,7 @@ bool Init() {
 bool InitTypes() {
     typeRenderer = il2cpp::TypeObject(klassRenderer);
     typeMeshFilter = il2cpp::TypeObject(klassMeshFilter);
+    typeAudio = il2cpp::TypeObject(klassAudio);
     return typeRenderer != nullptr;
 }
 
@@ -286,6 +293,11 @@ int MeshSubMeshCount(void* mesh) { return fMeshSubCount && il2cpp::Alive(mesh) ?
 void MeshSetSubMeshCount(void* mesh, int c) { if (fMeshSetSubCount && il2cpp::Alive(mesh)) fMeshSetSubCount.ptr(mesh, c, nullptr); }
 Il2CppArray* MeshTriangles(void* mesh) { return fMeshTriangles && il2cpp::Alive(mesh) ? fMeshTriangles.ptr(mesh, nullptr) : nullptr; }
 void MeshSetTriangles(void* mesh, Il2CppArray* t, int s) { if (fMeshSetTriangles && il2cpp::Alive(mesh)) fMeshSetTriangles.ptr(mesh, t, s, nullptr); }
+
+void StopAudio(void* component) {
+    void* src = fAudioStop ? GO_GetComponent(GetGameObject(component), typeAudio) : nullptr;
+    if (il2cpp::Alive(src)) fAudioStop.ptr(src, true, nullptr);
+}
 
 bool HasAmbientGetter() { return fGetAmbientInjected.ptr != nullptr; }
 Color GetAmbientLight() { Color c{}; if (fGetAmbientInjected) fGetAmbientInjected.ptr(&c); return c; }

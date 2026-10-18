@@ -1165,6 +1165,7 @@ void AutoUseBegin(void* required) {
     if (previous) unity::GO_SetActive(previous, false);  // hide, don't drop: we give it back right after
     unity::GO_SetActive(required, true);
     unity::GO_SetActive(PickRayObj(off::PickRay_T_NeedShit), false);
+    unity::StopAudio(g_pickRay);  // locks ignore clicks while their "locked" sound plays: replay right away
     FieldAt<bool>(g_pickRay, off::PickRay_buttonClicked) = true;  // replay the interaction next frame
     g_auto = { required, previous, true, state::NowMs() };
     LOG("auto-use: holding %s", g_hands[required].c_str());
@@ -1282,7 +1283,7 @@ void hkPickRay_Update(void* self, MI mi) {
         if (!g_auto.clickedMs) {
             if (!FieldAt<bool>(self, off::PickRay_buttonClicked)) g_auto.clickedMs = now;
             else if (now - g_auto.startMs > 3000) AutoUseFinish();
-        } else if (!unity::GO_ActiveSelf(g_auto.required) || now - g_auto.clickedMs > 3000) {
+        } else if (!unity::GO_ActiveSelf(g_auto.required) || now - g_auto.clickedMs > 1000) {
             AutoUseFinish();
         }
     } else if (g_requiredHand && g_cfg.autoUse && !g_cleanupRequested) {

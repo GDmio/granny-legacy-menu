@@ -96,6 +96,9 @@ bool AgentWarp(void* agent, Vec3 pos);
 void AgentSetStopped(void* agent, bool stopped);
 bool AgentGetStopped(void* agent);
 
+// Audio
+void StopAudio(void* component);  // stops every sound (one-shots included) of the AudioSource on that object
+
 // Keycodes from UnityEngine.KeyCode used by the cheat
 namespace key {
 constexpr int Space = 32, A = 97, D = 100, E = 101, Q = 113, S = 115, W = 119;
