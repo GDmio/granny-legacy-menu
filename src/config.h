@@ -102,6 +102,7 @@ struct Settings {
     float blurStrength = 0.7f;
     int keyMenu = 0x2D;         // VK_INSERT
     int keyUnload = 0x23;       // VK_END
+    int keyOpenDoor = 0;        // open / close the door in front of the player
 
     // --- Quick access (see toggles.cpp for the order of entries)
     bool fabEnabled = true;

@@ -411,6 +411,26 @@ void PageWorld() {
         }
         m3::EndCard();
     }, [] {
+        if (m3::BeginCard(L(u8"Двери"), icon::Folder, L(u8"Любые двери, даже те, что открывают только враги"))) {
+            if (m3::Button(L(u8"Открыть / закрыть дверь передо мной"), Btn::Filled, 0, icon::Location)) game::ToggleDoorInFront();
+            Dummy(ImVec2(0, 2));
+            m3::KeyBind(L(u8"Клавиша двери"), &g_cfg.keyOpenDoor);
+            if (m3::Button(L(u8"Открыть все двери"), Btn::Tonal, 0, icon::Refresh)) game::OpenAllDoors();
+            m3::Supporting(L(u8"«Все двери» открывает и ящики со шкафами. Ниже — ближайшие двери:"));
+            if (g_snap.doors.empty()) m3::Supporting(L(u8"Дверей поблизости нет."));
+            for (const DoorView& d : g_snap.doors) {
+                PushID(reinterpret_cast<void*>(d.id));
+                char buf[128];
+                std::snprintf(buf, sizeof(buf), L(u8"%s · %.0f м"), d.name.c_str(), d.dist);
+                AlignTextToFramePadding();
+                TextUnformatted(buf);
+                if (m3::Button(L(u8"Открыть"), Btn::Tonal)) game::SetDoor(d.id, true);
+                SameLine();
+                if (m3::Button(L(u8"Закрыть"), Btn::Outlined)) game::SetDoor(d.id, false);
+                PopID();
+            }
+        }
+        m3::EndCard();
         if (m3::BeginCard(L(u8"Замки и двери"), icon::Pin, L(u8"Открывает замки без ключей и инструментов"))) {
             m3::Supporting(L(u8"Запускает то же действие, что и игра при использовании нужного предмета. Некоторые замки ведут к концовке побега."));
             Dummy(ImVec2(0, 2));

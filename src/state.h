@@ -36,6 +36,13 @@ struct ItemView {
     float dist = 0.f;
 };
 
+struct DoorView {
+    uintptr_t id = 0;
+    std::string name;
+    float dist = 0.f;
+    bool open = false;
+};
+
 struct GiveEntry {
     std::string itemName;   // internal name used by Inventory.PickupItem
     std::string label;      // text the game shows on highlight
@@ -50,6 +57,7 @@ struct Snapshot {
     std::vector<EnemyView> enemies;
     std::vector<ItemView> items;
     std::vector<GiveEntry> giveList;
+    std::vector<DoorView> doors;
     std::string heldItem;
     float ammo = 0.f;
     bool shotgunLoaded = false;

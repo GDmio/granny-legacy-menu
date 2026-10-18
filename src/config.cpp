@@ -31,7 +31,7 @@ std::vector<Entry> Entries() {
         B(aimCamera), I(aimKey), F(aimSmooth), B(silentAim), F(aimFov), F(aimMaxDist), I(aimBone), B(aimDrawFov), B(aimIgnoreFrozen),
         B(freezeAll), B(enemySpeedOn), F(enemySpeedMult),
         B(fullbright), F(fullbrightLevel), B(noFog),
-        F(seedHue), F(seedChroma), B(lightTheme), I(language), I(toastStyle), I(glassMode), F(menuTransparency), F(blurStrength), I(keyMenu), I(keyUnload), B(fabEnabled), I(quickMask),
+        F(seedHue), F(seedChroma), B(lightTheme), I(language), I(toastStyle), I(glassMode), F(menuTransparency), F(blurStrength), I(keyMenu), I(keyUnload), I(keyOpenDoor), B(fabEnabled), I(quickMask),
     };
     // one hotkey entry per quick feature: key_<id>
     static std::vector<std::string> names;

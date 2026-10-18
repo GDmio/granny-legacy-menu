@@ -116,11 +116,13 @@ void HandleHotkeys() {
     // Always poll so edge detection stays consistent
     const bool menuKey = KeyPressed(g_cfg.keyMenu);
     const bool unloadKey = KeyPressed(g_cfg.keyUnload);
+    const bool doorKey = KeyPressed(g_cfg.keyOpenDoor);
     bool toggled[kMaxToggles]{};
     for (int i = 0; i < ToggleCount(); ++i) toggled[i] = KeyPressed(g_cfg.toggleKeys[i]);
     if (!focused || menu::IsCapturingKey()) return;
     if (menuKey) game::g_menuOpen = !game::g_menuOpen;
     if (unloadKey) g_unloadRequested = true;
+    if (doorKey) game::ToggleDoorInFront();
     for (int i = 0; i < ToggleCount(); ++i) {
         if (!toggled[i]) continue;
         const ToggleDef& t = Toggles()[i];

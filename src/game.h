@@ -37,4 +37,9 @@ int LockCount();
 void OpenLock(int index);
 void OpenAllLocks();
 
+// Doors, including the ones only enemies / scripts can open
+void ToggleDoorInFront();
+void SetDoor(uintptr_t id, bool open);
+void OpenAllDoors();
+
 } // namespace game

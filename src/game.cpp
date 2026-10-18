@@ -28,14 +28,14 @@ constexpr const char* kAsm = "Assembly-CSharp.dll";
 // ---------------------------------------------------------------------------
 #define GAME_CLASSES(X) \
     X(MobileFPS) X(PickRay) X(Inventory) X(ItemDefs) X(ItemSeedData) X(PlayerStatus) X(EnemyController) \
-    X(Eyes_Granny) X(Eyes_Grandpa) X(Eyes_MomSpider) X(AI_Granny) X(AI_Grandpa) X(AI_MomSpider) X(HandlePuzzles) X(FallingHolder) X(Outline) X(Paused)
+    X(Eyes_Granny) X(Eyes_Grandpa) X(Eyes_MomSpider) X(AI_Granny) X(AI_Grandpa) X(AI_MomSpider) X(HandlePuzzles) X(AnimatedStuff) X(StealDoorHit) X(PrisonCaptureTrigger) X(FallingHolder) X(Outline) X(Paused)
 
 #define GAME_FIELDS(X) \
     X(MobileFPS, playerCamera) X(MobileFPS, characterController) X(MobileFPS, playerCamera2) X(MobileFPS, PS) \
     X(PickRay, Drop1) X(PickRay, Ring) X(PickRay, IsCharged) X(PickRay, LoadedGun) X(PickRay, AmmoAmount) \
     X(PickRay, SprayLeft) X(PickRay, DartHasEnergy) X(PickRay, H_SG) X(PickRay, H_DSH) X(PickRay, H_CR) \
     X(PickRay, H_SPRAY) X(PickRay, H_FT) X(PickRay, H_PTRAP) X(PickRay, H_BATON) X(PickRay, Inventory) X(PickRay, ShootKey) \
-    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) X(PickRay, HP) \
+    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) X(PickRay, HP) X(PrisonCaptureTrigger, Locked) \
     X(Inventory, ItemDefs) X(ItemDefs, itemName) X(ItemDefs, handObject) X(ItemDefs, textHighlighted) \
     X(ItemSeedData, itemName) X(PlayerStatus, EC) \
     X(Eyes_Granny, AI) X(Eyes_Grandpa, AI) X(Eyes_MomSpider, ViewRange) X(AI_Granny, IsBlind) X(AI_Grandpa, IsBlind) \
@@ -137,6 +137,18 @@ const LockDef kLocks[] = {
     { "CutAtticWires", u8"Провода на чердаке" },
 };
 const void* g_lockMI[std::size(kLocks)] = {};
+
+// Doors: AnimatedStuff (doors, drawers, cupboards — also enemy-only doors), the steel door opened by
+// a gunshot (StealDoorHit) and the cage on the third floor (PrisonCaptureTrigger)
+enum class DoorKind { Animated, Steel, Cage };
+struct DoorType { void** klass; DoorKind kind; void* type = nullptr; };
+DoorType g_doorTypes[] = { { &cls::AnimatedStuff, DoorKind::Animated }, { &cls::StealDoorHit, DoorKind::Steel },
+                           { &cls::PrisonCaptureTrigger, DoorKind::Cage } };
+const void *g_miDoorOpen = nullptr, *g_miDoorClose = nullptr, *g_miSteelOpen = nullptr, *g_miCageOpen = nullptr;
+struct DoorRec { void* comp; uint32_t handle; DoorKind kind; void* transform; std::string name; };
+std::vector<DoorRec> g_doors;
+std::unordered_map<void*, bool> g_doorOpen;  // our own open/closed bookkeeping
+uint64_t g_lastDoorScan = 0;
 
 void* g_typeItemSeed = nullptr;
 void* g_typeOutline = nullptr;
@@ -732,6 +744,7 @@ void MainInit() {
     for (EnemyType& et : g_types) et.type = il2cpp::TypeObject(et.klass);
     g_typeItemSeed = il2cpp::TypeObject(cls::ItemSeedData);
     g_typeOutline = il2cpp::TypeObject(cls::Outline);
+    for (DoorType& d : g_doorTypes) d.type = il2cpp::TypeObject(*d.klass);
     LOG("MainInit: outlineType=%p itemSeedType=%p", g_typeOutline, g_typeItemSeed);
 }
 
@@ -961,6 +974,37 @@ std::string EnemyState(const Tracked& t) {
     return {};
 }
 
+void ScanDoors() {
+    for (DoorRec& d : g_doors) il2cpp::GCHandleFree(d.handle);
+    g_doors.clear();
+    for (const DoorType& dt : g_doorTypes) {
+        Il2CppArray* arr = unity::FindObjectsOfType(dt.type);
+        for (uintptr_t i = 0; i < il2cpp::ArrayLen(arr); ++i) {
+            void* comp = il2cpp::ArrayAt(arr, i);
+            if (!il2cpp::Alive(comp)) continue;
+            g_doors.push_back({ comp, il2cpp::GCHandleNew(comp), dt.kind, unity::GetTransform(comp), unity::GetName(unity::GetGameObject(comp)) });
+        }
+    }
+    g_lastDoorScan = state::NowMs();
+}
+
+void DoorSet(const DoorRec& d, bool open) {
+    if (!il2cpp::Alive(d.comp)) return;
+    switch (d.kind) {
+    case DoorKind::Animated: CallMI(open ? g_miDoorOpen : g_miDoorClose, d.comp); break;
+    case DoorKind::Steel:
+        if (open) CallMI(g_miSteelOpen, d.comp);
+        break;
+    case DoorKind::Cage:
+        if (open) {
+            if (off::PrisonCaptureTrigger_Locked >= 0) FieldAt<bool>(d.comp, off::PrisonCaptureTrigger_Locked) = false;
+            CallMI(g_miCageOpen, d.comp);
+        }
+        break;
+    }
+    g_doorOpen[d.comp] = open;
+}
+
 void BuildSnapshot() {
     Snapshot s;
     s.tickMs = state::NowMs();
@@ -1005,6 +1049,17 @@ void BuildSnapshot() {
     std::sort(s.items.begin(), s.items.end(), [](const ItemView& a, const ItemView& b) { return a.dist < b.dist; });
 
     s.giveList = g_giveList;
+    if (g_menuOpen) {
+        if (state::NowMs() - g_lastDoorScan > 1000) ScanDoors();
+        for (const DoorRec& d : g_doors) {
+            if (!il2cpp::Alive(d.comp)) continue;
+            const float dist = Length(unity::GetPosition(d.transform) - s.playerPos);
+            if (dist > 25.f) continue;
+            s.doors.push_back({ reinterpret_cast<uintptr_t>(d.comp), d.name, dist, g_doorOpen[d.comp] });
+        }
+        std::sort(s.doors.begin(), s.doors.end(), [](const DoorView& a, const DoorView& b) { return a.dist < b.dist; });
+        if (s.doors.size() > 12) s.doors.resize(12);
+    }
     if (il2cpp::Alive(g_pickRay)) {
         s.ammo = FieldAt<float>(g_pickRay, off::PickRay_AmmoAmount);
         s.shotgunLoaded = FieldAt<bool>(g_pickRay, off::PickRay_LoadedGun);
@@ -1107,6 +1162,9 @@ void Tick() {
         ReleaseAll(true);
         g_lastPlayer = g_player;
         g_doneHands.clear();
+        for (DoorRec& d : g_doors) il2cpp::GCHandleFree(d.handle);
+        g_doors.clear();
+        g_doorOpen.clear();
         g_noclipApplied = g_fovApplied = g_brightApplied = g_fogApplied = false;
     }
     state::RunCommands();
@@ -1642,6 +1700,10 @@ bool Init() {
     }
     g_miMomStopChase = il2cpp::FindMethodInfo(cls::AI_MomSpider, "StopChase", 0);
     for (size_t i = 0; i < std::size(kLocks); ++i) g_lockMI[i] = il2cpp::GetMethodInfo(cls::HandlePuzzles, kLocks[i].method, 0);
+    g_miDoorOpen = il2cpp::GetMethodInfo(cls::AnimatedStuff, "OpenAction", 0);
+    g_miDoorClose = il2cpp::GetMethodInfo(cls::AnimatedStuff, "CloseAction", 0);
+    g_miSteelOpen = il2cpp::GetMethodInfo(cls::StealDoorHit, "OpenIt", 0);
+    g_miCageOpen = il2cpp::GetMethodInfo(cls::PrisonCaptureTrigger, "AttemptOpen", 0);
 
     il2cpp::ForEachField(cls::PickRay, [](const char* name, int offset, void*) {
         if (name && name[0] == 'H' && name[1] == '_') g_handFields.emplace_back(offset, name);
@@ -1773,6 +1835,46 @@ void OpenAllLocks() {
         if (!hp) return;
         for (size_t i = 0; i < std::size(kLocks); ++i) CallMI(g_lockMI[i], hp);
         state::Notify(L(u8"Все замки открыты"));
+    });
+}
+
+void ToggleDoorInFront() {
+    state::Post([] {
+        void* camT = il2cpp::Alive(g_player) ? FieldAt<void*>(g_player, off::MobileFPS_playerCamera) : nullptr;
+        if (!camT) return state::Notify(L(u8"Сначала загрузитесь в игру"));
+        ScanDoors();
+        const Vec3 eye = unity::GetPosition(camT), fwd = unity::GetForward(camT);
+        const DoorRec* best = nullptr;
+        float bestScore = 1e9f;
+        for (const DoorRec& d : g_doors) {
+            if (!il2cpp::Alive(d.comp)) continue;
+            const Vec3 to = unity::GetPosition(d.transform) - eye;
+            const float dist = Length(to);
+            if (dist > 4.f || dist < 0.05f) continue;
+            const float cosA = (to.x * fwd.x + to.y * fwd.y + to.z * fwd.z) / dist;
+            if (cosA < 0.55f) continue;  // roughly within 55 degrees of the view
+            const float score = dist * (2.f - cosA);
+            if (score < bestScore) { bestScore = score; best = &d; }
+        }
+        if (!best) return state::Notify(L(u8"Перед вами нет двери"));
+        const bool open = !g_doorOpen[best->comp];
+        DoorSet(*best, open);
+        state::Notify(std::string(open ? L(u8"Открыто: ") : L(u8"Закрыто: ")) + best->name);
+    });
+}
+
+void SetDoor(uintptr_t id, bool open) {
+    state::Post([id, open] {
+        for (const DoorRec& d : g_doors)
+            if (reinterpret_cast<uintptr_t>(d.comp) == id) DoorSet(d, open);
+    });
+}
+
+void OpenAllDoors() {
+    state::Post([] {
+        ScanDoors();
+        for (const DoorRec& d : g_doors) DoorSet(d, true);
+        state::Notify(L(u8"Все двери открыты"));
     });
 }
 
