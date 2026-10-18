@@ -232,7 +232,8 @@ int g_spoofKey = -1;
 std::unordered_map<void*, std::string> g_hands;
 void* g_pickRayUpdate = nullptr;    // start of PickRay.Update, to recognise direct calls from it
 bool g_clickArmed = false;          // the interact click was registered during this PickRay.Update
-void* g_lastMissingHand = nullptr;  // last hand object PickRay.Update asked about that was not held
+std::vector<void*> g_missingHands;  // hand objects PickRay.Update asked about (not held), in order
+std::vector<void*> g_doneHands;     // hands auto-use already applied successfully on this level
 void* g_requiredHand = nullptr;     // hand the game complained about ("I need ...")
 struct AutoUse {
     void* required = nullptr;
@@ -1080,6 +1081,7 @@ void Tick() {
     if (g_player != g_lastPlayer) {  // new scene / respawn: restore whatever survived, forget the rest
         ReleaseAll(true);
         g_lastPlayer = g_player;
+        g_doneHands.clear();
         g_noclipApplied = g_fovApplied = g_brightApplied = g_fogApplied = false;
     }
     state::RunCommands();
@@ -1173,7 +1175,8 @@ void AutoUseBegin(void* required) {
 
 void AutoUseFinish() {
     const bool consumed = !unity::GO_ActiveSelf(g_auto.required);
-    if (!consumed) unity::GO_SetActive(g_auto.required, false);
+    if (consumed) g_doneHands.push_back(g_auto.required);  // the game took it: this part is placed
+    else unity::GO_SetActive(g_auto.required, false);
     FieldAt<bool>(g_pickRay, off::PickRay_buttonClicked) = false;
     // the player may have picked something up meanwhile: never put a second item in hand
     void* nowHeld = HeldHand(g_auto.required);
@@ -1202,16 +1205,23 @@ bool hkGoActiveSelf(void* go, MI mi) {
     if (FieldAt<bool>(g_pickRay, off::PickRay_buttonClicked)) {
         g_clickArmed = true;
     } else if (g_clickArmed && !active && g_hands.count(go) && CalledFromPickRayUpdate(_ReturnAddress())) {
-        g_lastMissingHand = go;
+        if (std::find(g_missingHands.begin(), g_missingHands.end(), go) == g_missingHands.end()) g_missingHands.push_back(go);
     }
     return active;
 }
 
 void (*oGoSetActive)(void*, bool, MI);
 void hkGoSetActive(void* go, bool value, MI mi) {
-    if (value && g_inPickRay && g_cfg.autoUse && !g_auto.running && g_lastMissingHand && !g_requiredHand &&
-        go == PickRayObj(off::PickRay_T_NeedShit))
-        g_requiredHand = g_lastMissingHand;
+    if (value && g_inPickRay && g_cfg.autoUse && !g_auto.running && !g_missingHands.empty() && !g_requiredHand &&
+        go == PickRayObj(off::PickRay_T_NeedShit)) {
+        // multi-part locks (e.g. two cogwheels) check several hands: take the first one not applied yet
+        for (void* h : g_missingHands)
+            if (std::find(g_doneHands.begin(), g_doneHands.end(), h) == g_doneHands.end()) {
+                g_requiredHand = h;
+                break;
+            }
+        if (!g_requiredHand) g_requiredHand = g_missingHands.front();
+    }
     oGoSetActive(go, value, mi);
 }
 
@@ -1254,7 +1264,8 @@ void hkPickRay_Update(void* self, MI mi) {
     if (SilentAimReady() && HandActive(off::PickRay_H_CR)) AimTransform(dartAim, FieldAt<void*>(self, off::PickRay_SpawnDart));
     const bool autoUseFrame = g_auto.running;
     g_clickArmed = false;
-    g_lastMissingHand = g_requiredHand = nullptr;
+    g_missingHands.clear();
+    g_requiredHand = nullptr;
     ArmClickIfPending();
 
     bool fireNow = false;
@@ -1294,7 +1305,8 @@ void hkPickRay_Update(void* self, MI mi) {
         AutoUseBegin(g_requiredHand);
     }
     g_clickArmed = false;
-    g_lastMissingHand = g_requiredHand = nullptr;
+    g_missingHands.clear();
+    g_requiredHand = nullptr;
     ApplyAmmo();
 }
 
