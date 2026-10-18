@@ -28,14 +28,14 @@ constexpr const char* kAsm = "Assembly-CSharp.dll";
 // ---------------------------------------------------------------------------
 #define GAME_CLASSES(X) \
     X(MobileFPS) X(PickRay) X(Inventory) X(ItemDefs) X(ItemSeedData) X(PlayerStatus) X(EnemyController) \
-    X(Eyes_Granny) X(Eyes_Grandpa) X(Eyes_MomSpider) X(AI_Granny) X(AI_Grandpa) X(AI_MomSpider) X(FallingHolder) X(Outline) X(Paused)
+    X(Eyes_Granny) X(Eyes_Grandpa) X(Eyes_MomSpider) X(AI_Granny) X(AI_Grandpa) X(AI_MomSpider) X(HandlePuzzles) X(FallingHolder) X(Outline) X(Paused)
 
 #define GAME_FIELDS(X) \
     X(MobileFPS, playerCamera) X(MobileFPS, characterController) X(MobileFPS, playerCamera2) X(MobileFPS, PS) \
     X(PickRay, Drop1) X(PickRay, Ring) X(PickRay, IsCharged) X(PickRay, LoadedGun) X(PickRay, AmmoAmount) \
     X(PickRay, SprayLeft) X(PickRay, DartHasEnergy) X(PickRay, H_SG) X(PickRay, H_DSH) X(PickRay, H_CR) \
     X(PickRay, H_SPRAY) X(PickRay, H_FT) X(PickRay, H_PTRAP) X(PickRay, H_BATON) X(PickRay, Inventory) X(PickRay, ShootKey) \
-    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) \
+    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) X(PickRay, HP) \
     X(Inventory, ItemDefs) X(ItemDefs, itemName) X(ItemDefs, handObject) X(ItemDefs, textHighlighted) \
     X(ItemSeedData, itemName) X(PlayerStatus, EC) \
     X(Eyes_Granny, AI) X(Eyes_Grandpa, AI) X(Eyes_MomSpider, ViewRange) X(AI_Granny, IsBlind) X(AI_Grandpa, IsBlind) \
@@ -112,6 +112,31 @@ EnemyType g_types[] = {
     { "Pumpkin", u8"Тыква" },
     { "UndeadBunny", u8"Зомби-кролик" },
 };
+
+const LockDef kLocks[] = {
+    { "MasterKeyUsed", u8"Главная дверь (мастер-ключ)" },
+    { "CuttingWire1", u8"Провод 1" },
+    { "CuttingWire2", u8"Провод 2" },
+    { "HitPlankDoor", u8"Доски на двери" },
+    { "UsePadlockKey", u8"Навесной замок" },
+    { "UsePadlockKey2", u8"Навесной замок 2" },
+    { "UseRustyPadlock", u8"Ржавый замок" },
+    { "UseCode", u8"Кодовый замок" },
+    { "CutChains", u8"Цепи" },
+    { "UseBattery", u8"Электрозамок" },
+    { "OpenSafe", u8"Сейф" },
+    { "UsePlayhouse", u8"Домик (Playhouse)" },
+    { "UseSpecialKey", u8"Особый замок" },
+    { "UseWPKey", u8"Оружейный шкаф" },
+    { "UseElecKey", u8"Шкафчик" },
+    { "OpenHatchSpiderCellar", u8"Люк в подвал пауков" },
+    { "OpenIronDoors", u8"Железные двери" },
+    { "OpenPort", u8"Гаражные ворота" },
+    { "OpenTrunkCarKey", u8"Багажник машины" },
+    { "PullBookshelf", u8"Книжный шкаф" },
+    { "CutAtticWires", u8"Провода на чердаке" },
+};
+const void* g_lockMI[std::size(kLocks)] = {};
 
 void* g_typeItemSeed = nullptr;
 void* g_typeOutline = nullptr;
@@ -1616,6 +1641,7 @@ bool Init() {
         ai.miStopChase = il2cpp::FindMethodInfo(ai.klass, "StopChase", 0);
     }
     g_miMomStopChase = il2cpp::FindMethodInfo(cls::AI_MomSpider, "StopChase", 0);
+    for (size_t i = 0; i < std::size(kLocks); ++i) g_lockMI[i] = il2cpp::GetMethodInfo(cls::HandlePuzzles, kLocks[i].method, 0);
 
     il2cpp::ForEachField(cls::PickRay, [](const char* name, int offset, void*) {
         if (name && name[0] == 'H' && name[1] == '_') g_handFields.emplace_back(offset, name);
@@ -1720,6 +1746,33 @@ void StopAllChases() {
         for (auto& [k, t] : g_enemies)
             if (il2cpp::Alive(t.comp)) CallMI(g_types[t.type].miStopChase, t.comp);
         state::Notify(L(u8"Погоня сброшена"));
+    });
+}
+
+const LockDef* Locks() { return kLocks; }
+int LockCount() { return static_cast<int>(std::size(kLocks)); }
+
+void* Puzzles() {
+    void* hp = PickRayObj(off::PickRay_HP);
+    if (!il2cpp::Alive(hp)) state::Notify(L(u8"Сначала загрузитесь в игру"));
+    return il2cpp::Alive(hp) ? hp : nullptr;
+}
+
+void OpenLock(int index) {
+    state::Post([index] {
+        void* hp = Puzzles();
+        if (!hp || index < 0 || index >= LockCount() || !g_lockMI[index]) return;
+        CallMI(g_lockMI[index], hp);
+        state::Notify(std::string(L(u8"Открыто: ")) + L(kLocks[index].label));
+    });
+}
+
+void OpenAllLocks() {
+    state::Post([] {
+        void* hp = Puzzles();
+        if (!hp) return;
+        for (size_t i = 0; i < std::size(kLocks); ++i) CallMI(g_lockMI[i], hp);
+        state::Notify(L(u8"Все замки открыты"));
     });
 }
 

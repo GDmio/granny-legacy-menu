@@ -30,4 +30,11 @@ void TeleportToItem(uintptr_t id);
 void BringItem(uintptr_t id);
 void TeleportToEnemy(uintptr_t id);
 
+// Locks: call the same HandlePuzzles actions the game runs when the right item is used
+struct LockDef { const char* method; const char* label; };
+const LockDef* Locks();
+int LockCount();
+void OpenLock(int index);
+void OpenAllLocks();
+
 } // namespace game

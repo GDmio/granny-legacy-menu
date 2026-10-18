@@ -411,6 +411,20 @@ void PageWorld() {
         }
         m3::EndCard();
     }, [] {
+        if (m3::BeginCard(L(u8"Замки и двери"), icon::Pin, L(u8"Открывает замки без ключей и инструментов"))) {
+            m3::Supporting(L(u8"Запускает то же действие, что и игра при использовании нужного предмета. Некоторые замки ведут к концовке побега."));
+            Dummy(ImVec2(0, 2));
+            if (m3::Button(L(u8"Открыть всё"), Btn::Filled, 0, icon::Refresh)) game::OpenAllLocks();
+            m3::FlowBegin();
+            for (int i = 0; i < game::LockCount(); ++i) {
+                const char* label = L(game::Locks()[i].label);
+                PushID(i);
+                m3::FlowNext(m3::ButtonWidth(label));
+                if (m3::Button(label, Btn::Tonal)) game::OpenLock(i);
+                PopID();
+            }
+        }
+        m3::EndCard();
         if (m3::BeginCard(L(u8"Время"), icon::Clock)) {
             m3::Switch(L(u8"Скорость игры"), &g_cfg.timescaleOn, L(u8"Замедление или ускорение всего мира"));
             m3::Slider(L(u8"Множитель"), &g_cfg.timescale, 0.1f, 5.f, "x%.2f");
