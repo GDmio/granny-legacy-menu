@@ -35,7 +35,7 @@ constexpr const char* kAsm = "Assembly-CSharp.dll";
     X(PickRay, Drop1) X(PickRay, Ring) X(PickRay, IsCharged) X(PickRay, LoadedGun) X(PickRay, AmmoAmount) \
     X(PickRay, SprayLeft) X(PickRay, DartHasEnergy) X(PickRay, H_SG) X(PickRay, H_DSH) X(PickRay, H_CR) \
     X(PickRay, H_SPRAY) X(PickRay, H_FT) X(PickRay, H_PTRAP) X(PickRay, H_BATON) X(PickRay, Inventory) X(PickRay, ShootKey) \
-    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) X(PickRay, HP) X(PrisonCaptureTrigger, Locked) X(AtticDoorManage, LockedD) X(BackdoorManage, LockedD) \
+    X(PickRay, buttonClicked) X(PickRay, T_NeedShit) X(PickRay, HP) X(PrisonCaptureTrigger, Locked) X(AtticDoorManage, LockedD) X(BackdoorManage, LockedD) X(AtticDoorManage, Door) X(BackdoorManage, Door) X(AnimatedStuff, AnimatedObject) \
     X(Inventory, ItemDefs) X(ItemDefs, itemName) X(ItemDefs, handObject) X(ItemDefs, textHighlighted) \
     X(ItemSeedData, itemName) X(PlayerStatus, EC) \
     X(Eyes_Granny, AI) X(Eyes_Grandpa, AI) X(Eyes_MomSpider, ViewRange) X(AI_Granny, IsBlind) X(AI_Grandpa, IsBlind) \
@@ -149,7 +149,7 @@ DoorType g_doorTypes[] = { { &cls::AnimatedStuff, DoorKind::Animated }, { &cls::
                            { &cls::BackdoorManage, DoorKind::Back }, { &cls::Sauna, DoorKind::Sauna } };
 const void *g_miDoorOpen = nullptr, *g_miDoorClose = nullptr, *g_miSteelOpen = nullptr, *g_miCageOpen = nullptr;
 const void *g_miAtticOpen = nullptr, *g_miBackOpen = nullptr, *g_miSaunaOpen = nullptr;
-struct DoorRec { void* comp; uint32_t handle; DoorKind kind; void* transform; std::string name; };
+struct DoorRec { void* comp; uint32_t handle; DoorKind kind; Vec3 anchor; std::string name; };
 std::vector<DoorRec> g_doors;
 std::unordered_map<void*, bool> g_doorOpen;  // our own open/closed bookkeeping
 uint64_t g_lastDoorScan = 0;
@@ -986,7 +986,27 @@ void ScanDoors() {
         for (uintptr_t i = 0; i < il2cpp::ArrayLen(arr); ++i) {
             void* comp = il2cpp::ArrayAt(arr, i);
             if (!il2cpp::Alive(comp)) continue;
-            g_doors.push_back({ comp, il2cpp::GCHandleNew(comp), dt.kind, unity::GetTransform(comp), unity::GetName(unity::GetGameObject(comp)) });
+            // the component often sits on a hinge or a separate manager: locate the visible door leaf instead
+            void* visual = comp;
+            const int visOff = dt.kind == DoorKind::Animated ? off::AnimatedStuff_AnimatedObject
+                               : dt.kind == DoorKind::Attic  ? off::AtticDoorManage_Door
+                               : dt.kind == DoorKind::Back   ? off::BackdoorManage_Door
+                                                             : -1;
+            if (visOff >= 0 && il2cpp::Alive(FieldAt<void*>(comp, visOff))) visual = FieldAt<void*>(comp, visOff);
+            void* go = unity::GetGameObject(visual);
+            Vec3 anchor = unity::GetPosition(unity::GetTransform(visual));
+            Vec3 mn{ FLT_MAX, FLT_MAX, FLT_MAX }, mx{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
+            bool any = false;
+            Il2CppArray* rends = unity::GO_GetComponentsInChildren(go, unity::typeRenderer, false);
+            for (uintptr_t r = 0; r < il2cpp::ArrayLen(rends) && r < 16; ++r) {
+                const Bounds b = unity::RendererBounds(il2cpp::ArrayAt(rends, r));
+                if (b.extents.x <= 0 && b.extents.y <= 0 && b.extents.z <= 0) continue;
+                mn = { std::min(mn.x, b.center.x - b.extents.x), std::min(mn.y, b.center.y - b.extents.y), std::min(mn.z, b.center.z - b.extents.z) };
+                mx = { std::max(mx.x, b.center.x + b.extents.x), std::max(mx.y, b.center.y + b.extents.y), std::max(mx.z, b.center.z + b.extents.z) };
+                any = true;
+            }
+            if (any && Length(mx - mn) < 8.f) anchor = (mn + mx) * 0.5f;
+            g_doors.push_back({ comp, il2cpp::GCHandleNew(comp), dt.kind, anchor, unity::GetName(unity::GetGameObject(comp)) });
         }
     }
     g_lastDoorScan = state::NowMs();
@@ -1066,7 +1086,7 @@ void BuildSnapshot() {
         if (state::NowMs() - g_lastDoorScan > 1000) ScanDoors();
         for (const DoorRec& d : g_doors) {
             if (!il2cpp::Alive(d.comp)) continue;
-            const float dist = Length(unity::GetPosition(d.transform) - s.playerPos);
+            const float dist = Length(d.anchor - s.playerPos);
             if (dist > 25.f) continue;
             s.doors.push_back({ reinterpret_cast<uintptr_t>(d.comp), d.name, dist, g_doorOpen[d.comp] });
         }
@@ -1864,12 +1884,13 @@ void ToggleDoorInFront() {
         float bestScore = 1e9f;
         for (const DoorRec& d : g_doors) {
             if (!il2cpp::Alive(d.comp)) continue;
-            const Vec3 to = unity::GetPosition(d.transform) - eye;
-            const float dist = Length(to);
-            if (dist > 4.f || dist < 0.05f) continue;
-            const float cosA = (to.x * fwd.x + to.y * fwd.y + to.z * fwd.z) / dist;
-            if (cosA < 0.55f) continue;  // roughly within 55 degrees of the view
-            const float score = dist * (2.f - cosA);
+            // distance along the view ray and how far the door leaf is from that ray
+            const Vec3 to = d.anchor - eye;
+            const float along = to.x * fwd.x + to.y * fwd.y + to.z * fwd.z;
+            if (along < 0.1f || along > 5.f) continue;
+            const float perp = Length(to - fwd * along);
+            if (perp > 1.3f) continue;
+            const float score = perp + along * 0.15f;
             if (score < bestScore) { bestScore = score; best = &d; }
         }
         if (!best) return state::Notify(L(u8"Перед вами нет двери"));
